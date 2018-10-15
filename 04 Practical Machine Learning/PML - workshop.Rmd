@@ -1,0 +1,460 @@
+---
+title: "Predict wine quality"
+author: "Peter Strauch"
+date: "15. októbra 2018"
+output:
+  html_document:
+    keep_md: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, echo = TRUE, fig.align='center')
+```
+
+### References
+How to do a reproducible document:  
+[>  Markdown Basics](https://rmarkdown.rstudio.com/authoring_basics.html)  
+[>  R Reference Card](https://cran.r-project.org/doc/contrib/Short-refcard.pdf)  
+[>  The caret Package](https://topepo.github.io/caret/index.html)
+
+How to obtain data:  
+[> 24 Ultimate Data Science Projects To Boost Your Knowledge and Skills](https://www.analyticsvidhya.com/blog/2018/05/24-ultimate-data-science-projects-to-boost-your-knowledge-and-skills/)  
+[>  The UCI Machine Learning Repository](http://archive.ics.uci.edu/ml/datasets.html)  
+
+
+### Load data and libraries
+[About data](http://archive.ics.uci.edu/ml/datasets/Wine+Quality)
+```{r loadings}
+library(caret)
+library(rattle)
+library(ggplot2)
+library(randomForest)
+library(rpart)
+library(gbm)
+library(nnet)
+
+## read data from URLs
+url1 <- "http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv"
+url2 <- "http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv"
+data_red <- read.csv(url(url1), sep = ";")
+data_white <- read.csv(url(url2), sep = ";")
+
+## dimensions of data
+dim(data_red)
+dim(data_white)
+```
+
+Input variables (based on physicochemical tests):  
+
++ 1. fixed acidity  
++ 2. volatile acidity  
++ 3. citric acid  
++ 4. residual sugar  
++ 5. chlorides  
++ 6. free sulfur dioxide  
++ 7. total sulfur dioxide  
++ 8. density  
++ 9. pH  
++ 10. sulphates  
++ 11. alcohol  
+
+Output variable (based on sensory data):  
+
++ 12. quality (score between 0 and 10)
+
+
+# Research question
+
++ Q: From what parameters depends the quality of red wine?
++ Classification problem: quality is categorical (factor, mark)
+```{r data modification}
+## only red wine
+data <- data_red
+
+## convert predicted outcome into factor variable
+data$quality <- as.factor(data$quality)
+```
+
++ I picked data about red wine because I like red wine more. :) 
++ If you are interested in white whine, use `data <- data_white`. 
++ It is also possible to mix data together by using `data <- rbind(data_red, data_white)` but this depend on data and research question.
+
+Then, Approach is almost the same.
+
+
+# Key idea of each ML algorithm
+
++ first, we split data into training and testing dataset,
++ then, we use training data for exploration and train a model
++ at the end, we evaluate model on testing dataset
+
+```{r splitting data}
+## do a split
+set.seed(1111)
+inTrain <- createDataPartition(data$quality, p = 0.7, list = F)
+training <- data[inTrain,]
+testing <- data[-inTrain,]
+
+## check dimensions
+dim(training)
+dim(testing)
+```
+*Note:* I use `set.seed()` because of reproducibility - same results, but still random.
+
+
+## Explore data
+```{r data exploration, fig.width = 10, fig.height=8}
+## info about data
+str(training)
+summary(training)
+
+## plot matrix
+plot(training[,-12], col = training$quality)
+```
+
+```{r data exploration-2}
+## plot - alcohol vs. volatile.acidity
+qplot(alcohol, volatile.acidity, data = training, col = quality, alpha=I(0.5))
+```
+
+We have too many categories for quality variable, so let's look only for data with `quality = 5 or 6 or 7` because here is the most of information.
+```{r data exploration on reduced data, fig.width = 10, fig.height=8}
+## reduced data
+data_reduced <- training[training$quality==5 | training$quality==6 | training$quality==7,]
+
+## plot matrix
+plot(data_reduced[,-12], col = data_reduced$quality)
+```
+
+```{r data exploration on reduced data-2}
+## plot - alcohol vs. volatile.acidity
+g1 <- qplot(alcohol, volatile.acidity, data = data_reduced, col = quality, alpha=I(0.5))
+g1
+```
+
+We can check, if some variable has near zero variance. If yes, we can omit this variable from the model building.  
+We can also check, if some variable is corelated with other, and thus can be also omited.
+```{r nzv}
+## near zero variance
+nzv(training, saveMetrics = TRUE)
+
+## corelations
+M <- cor(training[,-12])
+M <- round(abs(M), digits = 2)
+diag(M) <- 0
+max(M)
+```
+
+
+
+
+
+## Prediction
+
+### Guessing of some "areas" in graph with dominant quality  
+Some magic :)
+```{r guess a model}
+g1 + geom_vline(xintercept = 10.25) 
+```
+
+
+## 1. Decision trees
+first of all, we will try a tree - easy and interpretable model. We use `rpart` library.
+```{r tree-build}
+## build model - tree
+model_tree <- train(quality ~., data = training, method="rpart")
+```
+
+Here is information about model. Accuracy of this model on testing data is **`r round(max(model_tree$results$Accuracy), digits=4)`**.
+```{r tree-info}
+## model info
+model_tree
+
+## plot - accuracy from tuning parameter (cp)
+plot(model_tree)
+
+## importance of variables in the model
+varImp(model_tree)
+plot(varImp(model_tree))
+```
+
+Decisions from the tree are:
+```{r tree-decisions}
+## tree
+model_tree$finalModel
+fancyRpartPlot(model_tree$finalModel)
+
+## percentages in the tree
+table(training$quality) / nrow(training)
+```
+
+But this model can be overfitted on training dataset (building the model on training data), so we need to chceck for accuracy in testing dataset (independent data from the model).
+```{r tree-confusion matrix}
+## predictions of quality on testing data
+pred_tree <- predict(model_tree, testing)
+
+## compare real quality with predicted values
+confusionMatrix(testing$quality, pred_tree)
+```
+
+Accuracy on testing data is unbalanced with accuracy of the model (builded on training data).
+
+
+
+### 1a. Decision tree with Cross-validation
+Now, we use 7-fold cross-validation for building a model. The advantage is reduction of overfitting.
+```{r tree with cv7}
+set.seed(1234)
+model_tree_cv7 <- train(quality ~., data = training, method="rpart", 
+                        trControl = trainControl("cv", number = 7))
+model_tree_cv7
+confusionMatrix(testing$quality, predict(model_tree_cv7, testing))
+fancyRpartPlot(model_tree_cv7$finalModel)
+```
+
+We also can check accuracy in each fold:
+```{r tree with cv7-acc of folds}
+model_tree_cv7$resample
+```
+
+
+### 1b. Decision tree with preprocessing of data
+We can also preprocess data before building any model. We saw some skewness of data in exploration, so we can scale data.
+```{r tree with preprocess}
+set.seed(1234)
+model_tree_scaled <- train(quality ~., data = training, method="rpart", 
+                           trControl = trainControl("cv", number = 7),
+                           preProcess = "scale")
+model_tree_scaled
+confusionMatrix(testing$quality, predict(model_tree_scaled, testing))[3]
+```
+Scaling and centring have no impact on a model.
+*Note:* We can use wide variety of preprocessing, e.g. `PCA, scaling, centring, knnImpute, BoxCox,` ...
+
+
+## 2. Improvement of trees
+### 2a. Boosted with trees
+Gradient boosting method. Idea of boosting is to do a linear combination of predictors.
+```{r boosted tree-model, results='hide'}
+## build model - boosted
+set.seed(1234)
+model_gbm <- train(quality ~., data = training, method="gbm", 
+                  trControl = trainControl("cv", number = 7))
+```
+
+```{r boosted tree-info}
+## info about model
+model_gbm
+plot(model_gbm)
+summary(model_gbm)
+
+## acc on testing data
+confusionMatrix(testing$quality, predict(model_gbm, testing))
+```
+
+### 2b. Bagged trees
+Idea of bagging is bootstrap - calculate model on resamples and take the average model (same bias, less variability).
+```{r bagged tree}
+set.seed(1234)
+model_treebag <- train(quality ~., data = training, method="treebag", 
+                       trControl = trainControl("cv", number = 7))
+
+## info about model
+model_treebag
+model_treebag$finalModel
+
+## acc on testing data
+confusionMatrix(testing$quality, predict(model_treebag, testing))
+```
+
+
+## 3. Random forest
+```{r rf-build}
+## build model - random forest
+set.seed(1234)
+model_rf <- train(quality ~., data = training, method="rf", 
+                  trControl = trainControl("cv", number = 7))
+
+## info about model
+model_rf
+plot(model_rf)
+varImp(model_rf)
+
+## acc on testing data
+confusionMatrix(testing$quality, predict(model_rf, testing))
+```
+
+We can check of how many trees are in the forest or check some tree.
+```{r rf-trees}
+## number of trees in rf
+model_rf$finalModel
+
+## 155th tree in rf
+head(x = getTree(model_rf$finalModel, k=155), n = 15)
+```
+
+
+Here is how the error rate depends on number of trees. 
+```{r rf-error}
+## plot - error
+plot(model_rf$finalModel)
+```
+We can see that is not neccessary to have so many trees in forest. Next time we can specify argument `ntrees=100` into train function and save time needed for model building.
+
+
+
+## 4. Comparison with Neural networks
+We can try to use neural network (which is "black box") to save the day.
+```{r neural network-build, results='hide'}
+## build model - neural network
+set.seed(1234)
+model_nnet <- train(quality ~., data = training, method="nnet", 
+                    trControl = trainControl("cv", number = 7))
+```
+
+```{r neural network-info, echo=FALSE}
+## info about model
+model_nnet
+plot(model_nnet)
+
+## acc on testing data
+confusionMatrix(testing$quality, predict(model_nnet, testing))
+```
+Neural networks looks cool and complex, nobody understand it ... but some(many-)times results are worse.
+
+
+# Summary
+More info about methods and more methods:
+[The caret Package, cap.7, train Models By Tag](https://topepo.github.io/caret/train-models-by-tag.html)
+```{r compare acc}
+## simple tree
+confusionMatrix(testing$quality, predict(model_tree, testing))$overall[1]
+
+## cross-validated tree
+confusionMatrix(testing$quality, predict(model_tree_cv7, testing))$overall[1]
+
+## scaled tree
+confusionMatrix(testing$quality, predict(model_tree_scaled, testing))$overall[1]
+
+## boosted tree
+confusionMatrix(testing$quality, predict(model_gbm, testing))$overall[1]
+
+## bagged tree
+confusionMatrix(testing$quality, predict(model_treebag, testing))$overall[1]
+
+## random forest
+confusionMatrix(testing$quality, predict(model_rf, testing))$overall[1]
+
+## neural network
+confusionMatrix(testing$quality, predict(model_nnet, testing))$overall[1]
+```
+
+And now, let's **predict quality** of "our" **new wine**:
+```{r}
+## our wine parameters (average value of each column)
+our_wine <- as.data.frame(t(apply(X = data[,-12], MARGIN = 2, FUN = mean)))
+
+## predict quality of a wine, which isn't asses yet
+predict(object = model_rf, newdata = our_wine)
+```
+
+
+
+
+------
+# Addition
+2 more datasets from References at the top of this document:
+
++ Iris data - realy clear model
++ Loan prediction data - interesting
+
+
+### Iris data
+```{r iris}
+## data
+data("iris")
+
+## exploratory
+plot(iris, col=iris$Species)
+qplot(Petal.Length, Petal.Width, col=Species, data = iris) + geom_hline(yintercept = 1.75) + geom_vline(xintercept = 2.45)
+
+###### we have low data, so only crocc-validation is possible here
+
+## tree
+fit <- train(Species ~., data = iris, method="rpart",
+             trControl = trainControl("cv", number = 7))
+fit
+fit$finalModel
+fancyRpartPlot(fit$finalModel)
+varImp(fit)
+
+
+## forest
+fit2 <- train(Species ~., data = iris, method="rf", ntree=10,
+              trControl = trainControl("cv", number = 7))
+fit2
+varImp(fit2)
+```
+
+
+
+### loan prediction
+Variable Description:  
+**Loan_ID**	Unique Loan ID  
+**Gender**	Male/ Female  
+**Married**	Applicant married (Y/N)  
+**Dependents**	Number of dependents  
+**Education**	Applicant Education (Graduate/ Under Graduate)  
+**Self_Employed**	Self employed (Y/N)  
+**ApplicantIncome**	Applicant income  
+**CoapplicantIncome**	Coapplicant income  
+**LoanAmount**	Loan amount in thousands  
+**Loan_Amount_Term**	Term of loan in months  
+**Credit_History**	credit history meets guidelines  
+**Property_Area**	Urban/ Semi Urban/ Rural  
+**Loan_Status**	Loan approved (Y/N)  
+
+```{r loan}
+## data
+url_train <- "https://raw.githubusercontent.com/yew1eb/DM-Competition-Getting-Started/master/AV-loan-prediction/train.csv"
+url_test  <- "https://raw.githubusercontent.com/yew1eb/DM-Competition-Getting-Started/master/AV-loan-prediction/test.csv"
+
+training <- read.csv(url(url_train))
+testing <- read.csv(url(url_test))
+
+training <- training[complete.cases(training),]
+training <- training[,-1]
+
+## exploratory
+plot(training[,-12], col= training$Loan_Status)
+
+###### we have low data + testing data has no output variable for comparasion => only cross-validation
+
+## tree
+set.seed(123)
+model_fit1 <- train(Loan_Status ~., data = training, method = "rpart",
+                    trControl = trainControl("cv", number = 7))
+model_fit1
+model_fit1$finalModel
+fancyRpartPlot(model_fit1$finalModel)
+plot(model_fit1)
+varImp(model_fit1)
+plot(varImp(model_fit1))
+
+predict(model_fit1, testing)
+
+
+## random forest
+model_fit2 <- train(Loan_Status ~., data = training, method = "rf", ntree = 20)
+model_fit2
+plot(model_fit2)
+varImp(model_fit2)
+plot(varImp(model_fit2))
+
+predict(model_fit2, testing)
+
+
+## compare tree predictions vs. rf predictions
+confusionMatrix(predict(model_fit1, testing), predict(model_fit2, testing))
