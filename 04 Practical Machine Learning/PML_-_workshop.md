@@ -1,13 +1,16 @@
 ---
 title: "Predict wine quality"
 author: "Peter Strauch"
-date: "15. októbra 2018"
+date: "17th October, 2018"
 output:
   html_document:
     keep_md: yes
 editor_options: 
   chunk_output_type: console
 ---
+
+![](https://static.vinepair.com/wp-content/uploads/2015/06/red-wine-glasses.jpg)
+
 
 
 
@@ -26,19 +29,21 @@ How to obtain data:
 [About data](http://archive.ics.uci.edu/ml/datasets/Wine+Quality)
 
 ```r
-library(caret)
-library(rattle)
-library(ggplot2)
-library(randomForest)
-library(rpart)
-library(gbm)
-library(nnet)
+library(ggplot2)      # graphics
+library(lattice)      # graphics
+library(rattle)       # nice tree plot
+library(caret)        # ML library
+library(rpart)        # trees
+library(gbm)          # boosted trees
+library(ipred); library(e1071); library(plyr) # bagged trees
+library(randomForest) # random forest
+library(nnet)         # neural networks
 
 ## read data from URLs
 url1 <- "http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv"
 url2 <- "http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv"
-data_red <- read.csv(url(url1), sep = ";")
-data_white <- read.csv(url(url2), sep = ";")
+data_red <- read.csv(file = url(url1), sep = ";")
+data_white <- read.csv(file = url(url2), sep = ";")
 
 ## dimensions of data
 dim(data_red)
@@ -56,11 +61,29 @@ dim(data_white)
 ## [1] 4898   12
 ```
 
+Input variables (based on physicochemical tests):  
+
+1. fixed acidity  
+2. volatile acidity  
+3. citric acid  
+4. residual sugar  
+5. chlorides  
+6. free sulfur dioxide  
+7. total sulfur dioxide  
+8. density  
+9. pH  
+10. sulphates  
+11. alcohol  
+
+Output variable (based on sensory data):  
+
++ 12. quality (score between 0 and 10)
+
 
 # Research question
 
-+ Q: From what parameters depends the quality of red wine?
-+ Classification problem: quality is categorical (factor, mark)
++ **Q:** From what parameters depends the quality of red wine?
++ **Classification problem:** quality is categorical (factor, mark)
 
 ```r
 ## only red wine
@@ -72,22 +95,22 @@ data$quality <- as.factor(data$quality)
 
 + I picked data about red wine because I like red wine more. :) 
 + If you are interested in white whine, use `data <- data_white`. 
-+ It is also possible to mix data together by using `data <- rbind(data_red, data_white)` but this depend on data and research question.
++ It is also possible to mix data together by using `data <- rbind(data_red, data_white)` but this depends on data and research question.
 
 Then, Approach is almost the same.
 
 
 # Key idea of each ML algorithm
 
-+ first, we split data into training and testing dataset,
-+ then, we use training data for exploration and train a model
-+ at the end, we evaluate model on testing dataset
++ First, we **split data** into training and testing dataset,
++ then, we use training data for exploration and **train a model**
++ at the end, we **evaluate model** on testing dataset.
 
 
 ```r
 ## do a split
 set.seed(1111)
-inTrain <- createDataPartition(data$quality, p = 0.7, list = F)
+inTrain <- createDataPartition(y = data$quality, p = 0.7, list = F)
 training <- data[inTrain,]
 testing <- data[-inTrain,]
 
@@ -109,10 +132,35 @@ dim(testing)
 *Note:* I use `set.seed()` because of reproducibility - same results, but still random.
 
 
-## Explore data
+# Exploration
 
 ```r
 ## info about data
+head(x = training, n = 5)
+```
+
+```
+##   fixed.acidity volatile.acidity citric.acid residual.sugar chlorides
+## 3           7.8             0.76        0.04            2.3     0.092
+## 4          11.2             0.28        0.56            1.9     0.075
+## 5           7.4             0.70        0.00            1.9     0.076
+## 7           7.9             0.60        0.06            1.6     0.069
+## 8           7.3             0.65        0.00            1.2     0.065
+##   free.sulfur.dioxide total.sulfur.dioxide density   pH sulphates alcohol
+## 3                  15                   54  0.9970 3.26      0.65     9.8
+## 4                  17                   60  0.9980 3.16      0.58     9.8
+## 5                  11                   34  0.9978 3.51      0.56     9.4
+## 7                  15                   59  0.9964 3.30      0.46     9.4
+## 8                  15                   21  0.9946 3.39      0.47    10.0
+##   quality
+## 3       5
+## 4       6
+## 5       5
+## 7       5
+## 8       7
+```
+
+```r
 str(training)
 ```
 
@@ -170,12 +218,12 @@ plot(training[,-12], col = training$quality)
 
 ```r
 ## plot - alcohol vs. volatile.acidity
-qplot(alcohol, volatile.acidity, data = training, col = quality, alpha=I(0.5))
+qplot(x = alcohol, y = volatile.acidity, data = training, col = quality, alpha=I(0.5))
 ```
 
 <img src="PML_-_workshop_files/figure-html/data exploration-2-1.png" style="display: block; margin: auto;" />
 
-We have too many categories for quality variable, so let's look only for data with `quality = 5 or 6 or 7` because here is the most of information.
+We have too many categories for quality variable, so let's look only for data with `quality = 5 or 6 or 7` because here is the **most of information**.
 
 ```r
 ## reduced data
@@ -190,14 +238,14 @@ plot(data_reduced[,-12], col = data_reduced$quality)
 
 ```r
 ## plot - alcohol vs. volatile.acidity
-g1 <- qplot(alcohol, volatile.acidity, data = data_reduced, col = quality, alpha=I(0.5))
+g1 <- qplot(x = alcohol, y = volatile.acidity, data = data_reduced, col = quality, alpha=I(0.5))
 g1
 ```
 
 <img src="PML_-_workshop_files/figure-html/data exploration on reduced data-2-1.png" style="display: block; margin: auto;" />
 
-We can check, if some variable has near zero variance. If yes, we can omit this variable from the model building.  
-We can also check, if some variable is corelated with other, and thus can be also omited.
+We can check, if some variable has **near zero variance**. If yes, we can omit this variable from the model building.  
+We can also check, if some variable is **corelated** with other, and thus can be also omited.
 
 ```r
 ## near zero variance
@@ -223,6 +271,61 @@ nzv(training, saveMetrics = TRUE)
 ```r
 ## corelations
 M <- cor(training[,-12])
+M
+```
+
+```
+##                      fixed.acidity volatile.acidity citric.acid
+## fixed.acidity           1.00000000     -0.275934018  0.67176315
+## volatile.acidity       -0.27593402      1.000000000 -0.55669149
+## citric.acid             0.67176315     -0.556691487  1.00000000
+## residual.sugar          0.10062188     -0.024922327  0.15571663
+## chlorides               0.10077627      0.058282726  0.21316724
+## free.sulfur.dioxide    -0.15259478     -0.027427532 -0.05891054
+## total.sulfur.dioxide   -0.10195935      0.058879953  0.03322388
+## density                 0.65045803      0.002696194  0.37117207
+## pH                     -0.66774144      0.232876684 -0.52748082
+## sulphates               0.17040032     -0.247058422  0.29449067
+## alcohol                -0.03090026     -0.203528604  0.11673613
+##                      residual.sugar   chlorides free.sulfur.dioxide
+## fixed.acidity           0.100621878  0.10077627         -0.15259478
+## volatile.acidity       -0.024922327  0.05828273         -0.02742753
+## citric.acid             0.155716632  0.21316724         -0.05891054
+## residual.sugar          1.000000000  0.06058153          0.18482025
+## chlorides               0.060581526  1.00000000          0.03113920
+## free.sulfur.dioxide     0.184820250  0.03113920          1.00000000
+## total.sulfur.dioxide    0.182089768  0.07027945          0.64721443
+## density                 0.348203406  0.21041447         -0.01042776
+## pH                     -0.064354479 -0.28731402          0.07778272
+## sulphates              -0.004694396  0.37816704          0.06541904
+## alcohol                 0.054287117 -0.21398677         -0.07033256
+##                      total.sulfur.dioxide      density          pH
+## fixed.acidity                 -0.10195935  0.650458032 -0.66774144
+## volatile.acidity               0.05887995  0.002696194  0.23287668
+## citric.acid                    0.03322388  0.371172069 -0.52748082
+## residual.sugar                 0.18208977  0.348203406 -0.06435448
+## chlorides                      0.07027945  0.210414473 -0.28731402
+## free.sulfur.dioxide            0.64721443 -0.010427764  0.07778272
+## total.sulfur.dioxide           1.00000000  0.113284506 -0.07269281
+## density                        0.11328451  1.000000000 -0.31348267
+## pH                            -0.07269281 -0.313482671  1.00000000
+## sulphates                      0.07511224  0.134721550 -0.22835743
+## alcohol                       -0.23609439 -0.488612508  0.17689297
+##                         sulphates     alcohol
+## fixed.acidity         0.170400321 -0.03090026
+## volatile.acidity     -0.247058422 -0.20352860
+## citric.acid           0.294490668  0.11673613
+## residual.sugar       -0.004694396  0.05428712
+## chlorides             0.378167041 -0.21398677
+## free.sulfur.dioxide   0.065419035 -0.07033256
+## total.sulfur.dioxide  0.075112241 -0.23609439
+## density               0.134721550 -0.48861251
+## pH                   -0.228357427  0.17689297
+## sulphates             1.000000000  0.08862458
+## alcohol               0.088624580  1.00000000
+```
+
+```r
 M <- round(abs(M), digits = 2)
 diag(M) <- 0
 max(M)
@@ -236,7 +339,7 @@ max(M)
 
 
 
-## Prediction
+# Prediction
 
 ### Guessing of some "areas" in graph with dominant quality  
 Some magic :)
@@ -249,14 +352,14 @@ g1 + geom_vline(xintercept = 10.25)
 
 
 ## 1. Decision trees
-first of all, we will try a tree - easy and interpretable model. We use `rpart` library.
+First of all, we will try a tree - easy and interpretable model. We use `rpart` library.
 
 ```r
 ## build model - tree
 model_tree <- train(quality ~., data = training, method="rpart")
 ```
 
-Here is information about model. Accuracy of this model on testing data is **0.5499**.
+Here is information about model. Accuracy of this model on training data is **0.5499**.
 
 ```r
 ## model info
@@ -285,7 +388,7 @@ model_tree
 ```
 
 ```r
-## plot - accuracy from tuning parameter (cp)
+## plot - accuracy vs. tuning parameter (cp)
 plot(model_tree)
 ```
 
@@ -293,7 +396,7 @@ plot(model_tree)
 
 ```r
 ## importance of variables in the model
-varImp(model_tree)
+varImp(object = model_tree)
 ```
 
 ```
@@ -342,7 +445,7 @@ model_tree$finalModel
 ```
 
 ```r
-fancyRpartPlot(model_tree$finalModel)
+fancyRpartPlot(model = model_tree$finalModel)
 ```
 
 <img src="PML_-_workshop_files/figure-html/tree-decisions-1.png" style="display: block; margin: auto;" />
@@ -358,14 +461,14 @@ table(training$quality) / nrow(training)
 ## 0.006238859 0.033868093 0.425133690 0.398395722 0.124777184 0.011586453
 ```
 
-But this model can be overfitted on training dataset (building the model on training data), so we need to chceck for accuracy in testing dataset (independent data from the model).
+But this model can be overfitted on training dataset (building the model on training data), so we need to check for **accuracy in testing dataset** (independent data from the model).
 
 ```r
 ## predictions of quality on testing data
-pred_tree <- predict(model_tree, testing)
+pred_tree <- predict(object = model_tree, newdata = testing)
 
 ## compare real quality with predicted values
-confusionMatrix(testing$quality, pred_tree)
+confusionMatrix(data = pred_tree, reference = testing$quality)
 ```
 
 ```
@@ -373,19 +476,19 @@ confusionMatrix(testing$quality, pred_tree)
 ## 
 ##           Reference
 ## Prediction   3   4   5   6   7   8
-##          3   0   0   2   1   0   0
-##          4   0   0   7   7   1   0
-##          5   0   0 163  38   3   0
-##          6   0   0  83  76  32   0
-##          7   0   0   9  30  20   0
-##          8   0   0   0   2   3   0
+##          3   0   0   0   0   0   0
+##          4   0   0   0   0   0   0
+##          5   2   7 163  83   9   0
+##          6   1   7  38  76  30   2
+##          7   0   1   3  32  20   3
+##          8   0   0   0   0   0   0
 ## 
 ## Overall Statistics
 ##                                           
 ##                Accuracy : 0.543           
 ##                  95% CI : (0.4971, 0.5883)
-##     No Information Rate : 0.5535          
-##     P-Value [Acc > NIR] : 0.6942          
+##     No Information Rate : 0.4277          
+##     P-Value [Acc > NIR] : 2.704e-07       
 ##                                           
 ##                   Kappa : 0.2613          
 ##  Mcnemar's Test P-Value : NA              
@@ -393,14 +496,14 @@ confusionMatrix(testing$quality, pred_tree)
 ## Statistics by Class:
 ## 
 ##                      Class: 3 Class: 4 Class: 5 Class: 6 Class: 7 Class: 8
-## Sensitivity                NA       NA   0.6174   0.4935  0.33898       NA
-## Specificity          0.993711  0.96855   0.8075   0.6440  0.90670  0.98952
-## Pos Pred Value             NA       NA   0.7990   0.3979  0.33898       NA
-## Neg Pred Value             NA       NA   0.6300   0.7273  0.90670       NA
-## Prevalence           0.000000  0.00000   0.5535   0.3229  0.12369  0.00000
+## Sensitivity          0.000000  0.00000   0.7990   0.3979  0.33898  0.00000
+## Specificity          1.000000  1.00000   0.6300   0.7273  0.90670  1.00000
+## Pos Pred Value            NaN      NaN   0.6174   0.4935  0.33898      NaN
+## Neg Pred Value       0.993711  0.96855   0.8075   0.6440  0.90670  0.98952
+## Prevalence           0.006289  0.03145   0.4277   0.4004  0.12369  0.01048
 ## Detection Rate       0.000000  0.00000   0.3417   0.1593  0.04193  0.00000
-## Detection Prevalence 0.006289  0.03145   0.4277   0.4004  0.12369  0.01048
-## Balanced Accuracy          NA       NA   0.7125   0.5687  0.62284       NA
+## Detection Prevalence 0.000000  0.00000   0.5535   0.3229  0.12369  0.00000
+## Balanced Accuracy    0.500000  0.50000   0.7145   0.5626  0.62284  0.50000
 ```
 
 Accuracy on testing data is unbalanced with accuracy of the model (builded on training data).
@@ -408,11 +511,12 @@ Accuracy on testing data is unbalanced with accuracy of the model (builded on tr
 
 
 ### 1a. Decision tree with Cross-validation
-Now, we use 7-fold cross-validation for building a model. The advantage is reduction of overfitting.
+Now, we use **7-fold cross-validation** for building a model. The advantage is reduction of overfitting.
 
 ```r
 set.seed(1234)
-model_tree_cv7 <- train(quality ~., data = training, method="rpart", 
+model_tree_cv7 <- train(quality ~., data = training, 
+                        method="rpart", 
                         trControl = trainControl("cv", number = 7))
 model_tree_cv7
 ```
@@ -439,7 +543,7 @@ model_tree_cv7
 ```
 
 ```r
-confusionMatrix(testing$quality, predict(model_tree_cv7, testing))
+confusionMatrix(reference = testing$quality, data = predict(model_tree_cv7, testing))
 ```
 
 ```
@@ -447,19 +551,19 @@ confusionMatrix(testing$quality, predict(model_tree_cv7, testing))
 ## 
 ##           Reference
 ## Prediction   3   4   5   6   7   8
-##          3   0   0   2   1   0   0
-##          4   0   0   7   7   1   0
-##          5   0   0 163  38   3   0
-##          6   0   0  83  76  32   0
-##          7   0   0   9  30  20   0
-##          8   0   0   0   2   3   0
+##          3   0   0   0   0   0   0
+##          4   0   0   0   0   0   0
+##          5   2   7 163  83   9   0
+##          6   1   7  38  76  30   2
+##          7   0   1   3  32  20   3
+##          8   0   0   0   0   0   0
 ## 
 ## Overall Statistics
 ##                                           
 ##                Accuracy : 0.543           
 ##                  95% CI : (0.4971, 0.5883)
-##     No Information Rate : 0.5535          
-##     P-Value [Acc > NIR] : 0.6942          
+##     No Information Rate : 0.4277          
+##     P-Value [Acc > NIR] : 2.704e-07       
 ##                                           
 ##                   Kappa : 0.2613          
 ##  Mcnemar's Test P-Value : NA              
@@ -467,18 +571,18 @@ confusionMatrix(testing$quality, predict(model_tree_cv7, testing))
 ## Statistics by Class:
 ## 
 ##                      Class: 3 Class: 4 Class: 5 Class: 6 Class: 7 Class: 8
-## Sensitivity                NA       NA   0.6174   0.4935  0.33898       NA
-## Specificity          0.993711  0.96855   0.8075   0.6440  0.90670  0.98952
-## Pos Pred Value             NA       NA   0.7990   0.3979  0.33898       NA
-## Neg Pred Value             NA       NA   0.6300   0.7273  0.90670       NA
-## Prevalence           0.000000  0.00000   0.5535   0.3229  0.12369  0.00000
+## Sensitivity          0.000000  0.00000   0.7990   0.3979  0.33898  0.00000
+## Specificity          1.000000  1.00000   0.6300   0.7273  0.90670  1.00000
+## Pos Pred Value            NaN      NaN   0.6174   0.4935  0.33898      NaN
+## Neg Pred Value       0.993711  0.96855   0.8075   0.6440  0.90670  0.98952
+## Prevalence           0.006289  0.03145   0.4277   0.4004  0.12369  0.01048
 ## Detection Rate       0.000000  0.00000   0.3417   0.1593  0.04193  0.00000
-## Detection Prevalence 0.006289  0.03145   0.4277   0.4004  0.12369  0.01048
-## Balanced Accuracy          NA       NA   0.7125   0.5687  0.62284       NA
+## Detection Prevalence 0.000000  0.00000   0.5535   0.3229  0.12369  0.00000
+## Balanced Accuracy    0.500000  0.50000   0.7145   0.5626  0.62284  0.50000
 ```
 
 ```r
-fancyRpartPlot(model_tree_cv7$finalModel)
+fancyRpartPlot(model = model_tree_cv7$finalModel)
 ```
 
 <img src="PML_-_workshop_files/figure-html/tree with cv7-1.png" style="display: block; margin: auto;" />
@@ -500,13 +604,24 @@ model_tree_cv7$resample
 ## 7 0.5465839 0.2713125    Fold5
 ```
 
+```r
+# mean accuracy and kappa
+apply(X = model_tree_cv7$resample[,1:2], MARGIN = 2, FUN = mean)
+```
+
+```
+##  Accuracy     Kappa 
+## 0.5463398 0.2606196
+```
+
 
 ### 1b. Decision tree with preprocessing of data
-We can also preprocess data before building any model. We saw some skewness of data in exploration, so we can scale data.
+We can also **preprocess data** before building any model. We saw some skewness of data in exploration, so we can try to scale the data.
 
 ```r
 set.seed(1234)
-model_tree_scaled <- train(quality ~., data = training, method="rpart", 
+model_tree_scaled <- train(quality ~., data = training, 
+                           method="rpart", 
                            trControl = trainControl("cv", number = 7),
                            preProcess = "scale")
 model_tree_scaled
@@ -534,15 +649,42 @@ model_tree_scaled
 ```
 
 ```r
-confusionMatrix(testing$quality, predict(model_tree_scaled, testing))[3]
+confusionMatrix(reference = testing$quality, data = predict(model_tree_scaled, testing))
 ```
 
 ```
-## $overall
-##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##      0.5429769      0.2613477      0.4970757      0.5883423      0.5534591 
-## AccuracyPValue  McnemarPValue 
-##      0.6941731            NaN
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction   3   4   5   6   7   8
+##          3   0   0   0   0   0   0
+##          4   0   0   0   0   0   0
+##          5   2   7 163  83   9   0
+##          6   1   7  38  76  30   2
+##          7   0   1   3  32  20   3
+##          8   0   0   0   0   0   0
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.543           
+##                  95% CI : (0.4971, 0.5883)
+##     No Information Rate : 0.4277          
+##     P-Value [Acc > NIR] : 2.704e-07       
+##                                           
+##                   Kappa : 0.2613          
+##  Mcnemar's Test P-Value : NA              
+## 
+## Statistics by Class:
+## 
+##                      Class: 3 Class: 4 Class: 5 Class: 6 Class: 7 Class: 8
+## Sensitivity          0.000000  0.00000   0.7990   0.3979  0.33898  0.00000
+## Specificity          1.000000  1.00000   0.6300   0.7273  0.90670  1.00000
+## Pos Pred Value            NaN      NaN   0.6174   0.4935  0.33898      NaN
+## Neg Pred Value       0.993711  0.96855   0.8075   0.6440  0.90670  0.98952
+## Prevalence           0.006289  0.03145   0.4277   0.4004  0.12369  0.01048
+## Detection Rate       0.000000  0.00000   0.3417   0.1593  0.04193  0.00000
+## Detection Prevalence 0.000000  0.00000   0.5535   0.3229  0.12369  0.00000
+## Balanced Accuracy    0.500000  0.50000   0.7145   0.5626  0.62284  0.50000
 ```
 Scaling and centring have no impact on a model.
 *Note:* We can use wide variety of preprocessing, e.g. `PCA, scaling, centring, knnImpute, BoxCox,` ...
@@ -550,13 +692,14 @@ Scaling and centring have no impact on a model.
 
 ## 2. Improvement of trees
 ### 2a. Boosted with trees
-Gradient boosting method. Idea of boosting is to do a linear combination of predictors.
+Gradient boosting method. Idea of boosting is to do a **linear combination of predictors**.
 
 ```r
 ## build model - boosted
 set.seed(1234)
-model_gbm <- train(quality ~., data = training, method="gbm", 
-                  trControl = trainControl("cv", number = 7))
+model_gbm <- train(quality ~., data = training, 
+                   method="gbm", 
+                   trControl = trainControl("cv", number = 7))
 ```
 
 
@@ -625,7 +768,7 @@ summary(model_gbm)
 
 ```r
 ## acc on testing data
-confusionMatrix(testing$quality, predict(model_gbm, testing))
+confusionMatrix(reference = testing$quality, data = predict(model_gbm, testing))
 ```
 
 ```
@@ -633,19 +776,19 @@ confusionMatrix(testing$quality, predict(model_gbm, testing))
 ## 
 ##           Reference
 ## Prediction   3   4   5   6   7   8
-##          3   0   1   2   0   0   0
-##          4   0   1   8   5   1   0
-##          5   0   2 164  38   0   0
-##          6   0   1  62 107  20   1
-##          7   0   0   5  28  26   0
-##          8   0   0   0   4   1   0
+##          3   0   0   0   0   0   0
+##          4   1   1   2   1   0   0
+##          5   2   8 164  62   5   0
+##          6   0   5  38 107  28   4
+##          7   0   1   0  20  26   1
+##          8   0   0   0   1   0   0
 ## 
 ## Overall Statistics
 ##                                           
 ##                Accuracy : 0.6247          
 ##                  95% CI : (0.5796, 0.6683)
-##     No Information Rate : 0.5052          
-##     P-Value [Acc > NIR] : 9.845e-08       
+##     No Information Rate : 0.4277          
+##     P-Value [Acc > NIR] : < 2.2e-16       
 ##                                           
 ##                   Kappa : 0.3931          
 ##  Mcnemar's Test P-Value : NA              
@@ -653,22 +796,25 @@ confusionMatrix(testing$quality, predict(model_gbm, testing))
 ## Statistics by Class:
 ## 
 ##                      Class: 3 Class: 4 Class: 5 Class: 6 Class: 7 Class: 8
-## Sensitivity                NA 0.200000   0.6805   0.5879  0.54167 0.000000
-## Specificity          0.993711 0.970339   0.8305   0.7153  0.92308 0.989496
-## Pos Pred Value             NA 0.066667   0.8039   0.5602  0.44068 0.000000
-## Neg Pred Value             NA 0.991342   0.7179   0.7378  0.94737 0.997881
-## Prevalence           0.000000 0.010482   0.5052   0.3816  0.10063 0.002096
+## Sensitivity          0.000000 0.066667   0.8039   0.5602  0.44068 0.000000
+## Specificity          1.000000 0.991342   0.7179   0.7378  0.94737 0.997881
+## Pos Pred Value            NaN 0.200000   0.6805   0.5879  0.54167 0.000000
+## Neg Pred Value       0.993711 0.970339   0.8305   0.7153  0.92308 0.989496
+## Prevalence           0.006289 0.031447   0.4277   0.4004  0.12369 0.010482
 ## Detection Rate       0.000000 0.002096   0.3438   0.2243  0.05451 0.000000
-## Detection Prevalence 0.006289 0.031447   0.4277   0.4004  0.12369 0.010482
-## Balanced Accuracy          NA 0.585169   0.7555   0.6516  0.73237 0.494748
+## Detection Prevalence 0.000000 0.010482   0.5052   0.3816  0.10063 0.002096
+## Balanced Accuracy    0.500000 0.529004   0.7609   0.6490  0.69402 0.498941
 ```
 
 ### 2b. Bagged trees
-Idea of bagging is bootstrap - calculate model on resamples and take the average model (same bias, less variability).
+*Note:* Bagging = Bootstrap Aggregation
+
+Idea of bagging is bootstrap - **calculate model on resamples** and take the average model (same bias, less variability).
 
 ```r
 set.seed(1234)
-model_treebag <- train(quality ~., data = training, method="treebag", 
+model_treebag <- train(quality ~., data = training, 
+                       method="treebag", 
                        trControl = trainControl("cv", number = 7))
 
 ## info about model
@@ -702,7 +848,7 @@ model_treebag$finalModel
 
 ```r
 ## acc on testing data
-confusionMatrix(testing$quality, predict(model_treebag, testing))
+confusionMatrix(reference = testing$quality, data = predict(model_treebag, testing))
 ```
 
 ```
@@ -710,18 +856,18 @@ confusionMatrix(testing$quality, predict(model_treebag, testing))
 ## 
 ##           Reference
 ## Prediction   3   4   5   6   7   8
-##          3   0   1   2   0   0   0
-##          4   0   0  10   3   2   0
-##          5   1   1 163  39   0   0
-##          6   0   2  42 124  22   1
-##          7   0   0   3  20  36   0
-##          8   0   0   0   2   2   1
+##          3   0   0   1   0   0   0
+##          4   1   0   1   2   0   0
+##          5   2  10 163  42   3   0
+##          6   0   3  39 124  20   2
+##          7   0   2   0  22  36   2
+##          8   0   0   0   1   0   1
 ## 
 ## Overall Statistics
 ##                                          
 ##                Accuracy : 0.6792         
 ##                  95% CI : (0.6353, 0.721)
-##     No Information Rate : 0.4612         
+##     No Information Rate : 0.4277         
 ##     P-Value [Acc > NIR] : < 2.2e-16      
 ##                                          
 ##                   Kappa : 0.4897         
@@ -730,14 +876,14 @@ confusionMatrix(testing$quality, predict(model_treebag, testing))
 ## Statistics by Class:
 ## 
 ##                      Class: 3 Class: 4 Class: 5 Class: 6 Class: 7 Class: 8
-## Sensitivity          0.000000 0.000000   0.7409   0.6596  0.58065 0.500000
-## Specificity          0.993697 0.968288   0.8405   0.7682  0.94458 0.991579
-## Pos Pred Value       0.000000 0.000000   0.7990   0.6492  0.61017 0.200000
-## Neg Pred Value       0.997890 0.991342   0.7912   0.7762  0.93780 0.997881
-## Prevalence           0.002096 0.008386   0.4612   0.3941  0.12998 0.004193
+## Sensitivity          0.000000 0.000000   0.7990   0.6492  0.61017 0.200000
+## Specificity          0.997890 0.991342   0.7912   0.7762  0.93780 0.997881
+## Pos Pred Value       0.000000 0.000000   0.7409   0.6596  0.58065 0.500000
+## Neg Pred Value       0.993697 0.968288   0.8405   0.7682  0.94458 0.991579
+## Prevalence           0.006289 0.031447   0.4277   0.4004  0.12369 0.010482
 ## Detection Rate       0.000000 0.000000   0.3417   0.2600  0.07547 0.002096
-## Detection Prevalence 0.006289 0.031447   0.4277   0.4004  0.12369 0.010482
-## Balanced Accuracy    0.496849 0.484144   0.7907   0.7139  0.76261 0.745789
+## Detection Prevalence 0.002096 0.008386   0.4612   0.3941  0.12998 0.004193
+## Balanced Accuracy    0.498945 0.495671   0.7951   0.7127  0.77398 0.598941
 ```
 
 
@@ -746,7 +892,8 @@ confusionMatrix(testing$quality, predict(model_treebag, testing))
 ```r
 ## build model - random forest
 set.seed(1234)
-model_rf <- train(quality ~., data = training, method="rf", 
+model_rf <- train(quality ~., data = training, 
+                  method="rf", 
                   trControl = trainControl("cv", number = 7))
 
 ## info about model
@@ -803,7 +950,7 @@ varImp(model_rf)
 
 ```r
 ## acc on testing data
-confusionMatrix(testing$quality, predict(model_rf, testing))
+confusionMatrix(reference = testing$quality, data = predict(model_rf, testing))
 ```
 
 ```
@@ -811,18 +958,18 @@ confusionMatrix(testing$quality, predict(model_rf, testing))
 ## 
 ##           Reference
 ## Prediction   3   4   5   6   7   8
-##          3   0   1   1   1   0   0
-##          4   0   0   8   6   1   0
-##          5   0   1 169  34   0   0
-##          6   0   1  39 131  20   0
-##          7   0   0   4  18  37   0
-##          8   0   0   0   2   2   1
+##          3   0   0   0   0   0   0
+##          4   1   0   1   1   0   0
+##          5   1   8 169  39   4   0
+##          6   1   6  34 131  18   2
+##          7   0   1   0  20  37   2
+##          8   0   0   0   0   0   1
 ## 
 ## Overall Statistics
 ##                                          
 ##                Accuracy : 0.7086         
 ##                  95% CI : (0.6656, 0.749)
-##     No Information Rate : 0.4633         
+##     No Information Rate : 0.4277         
 ##     P-Value [Acc > NIR] : < 2.2e-16      
 ##                                          
 ##                   Kappa : 0.5337         
@@ -831,17 +978,24 @@ confusionMatrix(testing$quality, predict(model_rf, testing))
 ## Statistics by Class:
 ## 
 ##                      Class: 3 Class: 4 Class: 5 Class: 6 Class: 7 Class: 8
-## Sensitivity                NA 0.000000   0.7647   0.6823  0.61667 1.000000
-## Specificity          0.993711 0.968354   0.8633   0.7895  0.94724 0.991597
-## Pos Pred Value             NA 0.000000   0.8284   0.6859  0.62712 0.200000
-## Neg Pred Value             NA 0.993506   0.8095   0.7867  0.94498 1.000000
-## Prevalence           0.000000 0.006289   0.4633   0.4025  0.12579 0.002096
+## Sensitivity          0.000000 0.000000   0.8284   0.6859  0.62712 0.200000
+## Specificity          1.000000 0.993506   0.8095   0.7867  0.94498 1.000000
+## Pos Pred Value            NaN 0.000000   0.7647   0.6823  0.61667 1.000000
+## Neg Pred Value       0.993711 0.968354   0.8633   0.7895  0.94724 0.991597
+## Prevalence           0.006289 0.031447   0.4277   0.4004  0.12369 0.010482
 ## Detection Rate       0.000000 0.000000   0.3543   0.2746  0.07757 0.002096
-## Detection Prevalence 0.006289 0.031447   0.4277   0.4004  0.12369 0.010482
-## Balanced Accuracy          NA 0.484177   0.8140   0.7359  0.78195 0.995798
+## Detection Prevalence 0.000000 0.006289   0.4633   0.4025  0.12579 0.002096
+## Balanced Accuracy    0.500000 0.496753   0.8190   0.7363  0.78605 0.600000
 ```
 
-We can check of how many trees are in the forest or check some tree.
+We can check of how many trees are in the forest or check some tree:
+
++ left daughter	-- the row where the left daughter node is; 0 if the node is terminal  
++ right daughter -- the row where the right daughter node is; 0 if the node is terminal  
++ split var	-- which variable was used to split the node; 0 if the node is terminal  
++ split point	-- where the best split is; see Details for categorical predictor  
++ status-- is the node terminal (-1) or not (1)  
++ prediction -- the prediction for the node; 0 if the node is not terminal  
 
 ```r
 ## number of trees in rf
@@ -868,8 +1022,17 @@ model_rf$finalModel
 ```
 
 ```r
-## 155th tree in rf
-head(x = getTree(model_rf$finalModel, k=155), n = 15)
+## 155th tree in rf (show only head of 20 rows)
+tree155 <- getTree(rfobj = model_rf$finalModel, k=155)
+dim(tree155)
+```
+
+```
+## [1] 415   6
+```
+
+```r
+head(x = tree155, n = 20)
 ```
 
 ```
@@ -889,6 +1052,11 @@ head(x = getTree(model_rf$finalModel, k=155), n = 15)
 ## 13            26             27         4       1.650      1          0
 ## 14            28             29        11      11.450      1          0
 ## 15            30             31         3       0.160      1          0
+## 16             0              0         0       0.000     -1          3
+## 17            32             33         2       0.275      1          0
+## 18             0              0         0       0.000     -1          3
+## 19            34             35        10       0.665      1          0
+## 20            36             37        11       9.150      1          0
 ```
 
 
@@ -900,7 +1068,8 @@ plot(model_rf$finalModel)
 ```
 
 <img src="PML_-_workshop_files/figure-html/rf-error-1.png" style="display: block; margin: auto;" />
-We can see that is not neccessary to have so many trees in forest. Next time we can specify argument `ntrees=100` into train function and save time needed for model building.
+We can see that is not neccessary to have so many trees in forest. Next time we can specify argument `ntrees=100` into `train()` function and save time needed for model building.
+
 
 
 
@@ -910,7 +1079,8 @@ We can try to use neural network (which is "black box") to save the day.
 ```r
 ## build model - neural network
 set.seed(1234)
-model_nnet <- train(quality ~., data = training, method="nnet", 
+model_nnet <- train(quality ~., data = training, 
+                    method="nnet", 
                     trControl = trainControl("cv", number = 7))
 ```
 
@@ -949,19 +1119,19 @@ model_nnet <- train(quality ~., data = training, method="nnet",
 ## 
 ##           Reference
 ## Prediction   3   4   5   6   7   8
-##          3   0   0   3   0   0   0
-##          4   0   0   9   5   1   0
-##          5   0   0 163  41   0   0
-##          6   0   0  62 111  18   0
-##          7   0   0   5  36  18   0
-##          8   0   0   0   2   3   0
+##          3   0   0   0   0   0   0
+##          4   0   0   0   0   0   0
+##          5   3   9 163  62   5   0
+##          6   0   5  41 111  36   2
+##          7   0   1   0  18  18   3
+##          8   0   0   0   0   0   0
 ## 
 ## Overall Statistics
 ##                                           
 ##                Accuracy : 0.6122          
 ##                  95% CI : (0.5668, 0.6561)
-##     No Information Rate : 0.5073          
-##     P-Value [Acc > NIR] : 2.637e-06       
+##     No Information Rate : 0.4277          
+##     P-Value [Acc > NIR] : 4.28e-16        
 ##                                           
 ##                   Kappa : 0.3631          
 ##  Mcnemar's Test P-Value : NA              
@@ -969,21 +1139,39 @@ model_nnet <- train(quality ~., data = training, method="nnet",
 ## Statistics by Class:
 ## 
 ##                      Class: 3 Class: 4 Class: 5 Class: 6 Class: 7 Class: 8
-## Sensitivity                NA       NA   0.6736   0.5692  0.45000       NA
-## Specificity          0.993711  0.96855   0.8255   0.7163  0.90618  0.98952
-## Pos Pred Value             NA       NA   0.7990   0.5812  0.30508       NA
-## Neg Pred Value             NA       NA   0.7106   0.7063  0.94737       NA
-## Prevalence           0.000000  0.00000   0.5073   0.4088  0.08386  0.00000
+## Sensitivity          0.000000  0.00000   0.7990   0.5812  0.30508  0.00000
+## Specificity          1.000000  1.00000   0.7106   0.7063  0.94737  1.00000
+## Pos Pred Value            NaN      NaN   0.6736   0.5692  0.45000      NaN
+## Neg Pred Value       0.993711  0.96855   0.8255   0.7163  0.90618  0.98952
+## Prevalence           0.006289  0.03145   0.4277   0.4004  0.12369  0.01048
 ## Detection Rate       0.000000  0.00000   0.3417   0.2327  0.03774  0.00000
-## Detection Prevalence 0.006289  0.03145   0.4277   0.4004  0.12369  0.01048
-## Balanced Accuracy          NA       NA   0.7495   0.6428  0.67809       NA
+## Detection Prevalence 0.000000  0.00000   0.5073   0.4088  0.08386  0.00000
+## Balanced Accuracy    0.500000  0.50000   0.7548   0.6437  0.62623  0.50000
 ```
 Neural networks looks cool and complex, nobody understand it ... but some(many-)times results are worse.
 
 
+
+
+## Impovements
+### Impovement of predictors  
+
++ use functions on variables -- log, ...
++ change continuos variable into categorical, ...
+
+
+### Impovement of model - tuning
+We can set up **tuning parameters** of model **manualy** by using argument 
+`tuneGrid = expand.grid(parameter1 = values1, parameter2 = values2, ...)` into `train()` function.
+
+More info about tuning:
+[The caret Package, cap.5: Model Training and Tuning](https://topepo.github.io/caret/model-training-and-tuning.html)
+
+
+
 # Summary
 More info about methods and more methods:
-[The caret Package, cap.7, train Models By Tag](https://topepo.github.io/caret/train-models-by-tag.html)
+[The caret Package, cap.7: Train Models By Tag](https://topepo.github.io/caret/train-models-by-tag.html)
 
 ```r
 ## simple tree
@@ -997,6 +1185,8 @@ confusionMatrix(testing$quality, predict(model_tree, testing))$overall[1]
 
 ```r
 ## cross-validated tree
+
+
 confusionMatrix(testing$quality, predict(model_tree_cv7, testing))$overall[1]
 ```
 
@@ -1055,12 +1245,163 @@ confusionMatrix(testing$quality, predict(model_nnet, testing))$overall[1]
 ## 0.6121593
 ```
 
-And now, let's **predict quality** of "our" **new wine**:
+
+### Comparing Between-Models
+Given these models, can we make statistical statements about their performance differences? To do this, we first collect the resampling results using `resamples()`.
+
+```r
+## resampling results
+resamps <- resamples(list(TREE = model_tree_cv7,
+                          GBM  = model_gbm,
+                          BAGG = model_treebag,
+                          RF   = model_rf,
+                          NNET = model_nnet))
+
+## info about resamples
+resamps
+```
+
+```
+## 
+## Call:
+## resamples.default(x = list(TREE = model_tree_cv7, GBM = model_gbm, BAGG
+##  = model_treebag, RF = model_rf, NNET = model_nnet))
+## 
+## Models: TREE, GBM, BAGG, RF, NNET 
+## Number of resamples: 7 
+## Performance metrics: Accuracy, Kappa 
+## Time estimates for: everything, final model fit
+```
+
+```r
+summary(resamps)
+```
+
+```
+## 
+## Call:
+## summary.resamples(object = resamps)
+## 
+## Models: TREE, GBM, BAGG, RF, NNET 
+## Number of resamples: 7 
+## 
+## Accuracy 
+##         Min.   1st Qu.    Median      Mean   3rd Qu.      Max. NA's
+## TREE 0.52500 0.5375000 0.5465839 0.5463398 0.5513975 0.5750000    0
+## GBM  0.58125 0.5950116 0.5962733 0.6096495 0.6281250 0.6437500    0
+## BAGG 0.61250 0.6281250 0.6500000 0.6443489 0.6573370 0.6770186    0
+## RF   0.62500 0.6531250 0.6583851 0.6577362 0.6687500 0.6770186    0
+## NNET 0.58750 0.5919061 0.6125000 0.6042757 0.6125000 0.6211180    0
+## 
+## Kappa 
+##           Min.   1st Qu.    Median      Mean   3rd Qu.      Max. NA's
+## TREE 0.2369478 0.2432374 0.2575406 0.2606196 0.2701592 0.3030555    0
+## GBM  0.3123356 0.3428840 0.3480563 0.3675336 0.4022246 0.4221265    0
+## BAGG 0.3662962 0.4109515 0.4318483 0.4296151 0.4525036 0.4822511    0
+## RF   0.4007117 0.4428999 0.4556799 0.4507108 0.4635633 0.4856578    0
+## NNET 0.3295476 0.3393108 0.3662152 0.3556469 0.3679898 0.3791643    0
+```
+
+```r
+trellis.par.set(caretTheme())
+bwplot(resamps)
+```
+
+<img src="PML_-_workshop_files/figure-html/between-Models-1.png" style="display: block; margin: auto;" />
+
+```r
+dotplot(resamps)
+```
+
+<img src="PML_-_workshop_files/figure-html/between-Models-2.png" style="display: block; margin: auto;" />
+
+```r
+splom(resamps)
+```
+
+<img src="PML_-_workshop_files/figure-html/between-Models-3.png" style="display: block; margin: auto;" />
+
+```r
+## differences of resamples
+difValues <- diff(resamps)
+difValues
+```
+
+```
+## 
+## Call:
+## diff.resamples(x = resamps)
+## 
+## Models: TREE, GBM, BAGG, RF, NNET 
+## Metrics: Accuracy, Kappa 
+## Number of differences: 10 
+## p-value adjustment: bonferroni
+```
+
+```r
+## info about differences
+summary(difValues)
+```
+
+```
+## 
+## Call:
+## summary.diff.resamples(object = difValues)
+## 
+## p-value adjustment: bonferroni 
+## Upper diagonal: estimates of the difference
+## Lower diagonal: p-value for H0: difference = 0
+## 
+## Accuracy 
+##      TREE      GBM       BAGG      RF        NNET     
+## TREE           -0.063310 -0.098009 -0.111396 -0.057936
+## GBM  0.0087483           -0.034699 -0.048087  0.005374
+## BAGG 0.0026725 0.3151662           -0.013387  0.040073
+## RF   9.85e-05  0.0659684 1.0000000            0.053461
+## NNET 0.0008553 1.0000000 0.0790014 0.0156827          
+## 
+## Kappa 
+##      TREE      GBM       BAGG      RF        NNET    
+## TREE           -0.10691  -0.16900  -0.19009  -0.09503
+## GBM  0.0030221           -0.06208  -0.08318   0.01189
+## BAGG 0.0021799 0.1777119           -0.02110   0.07397
+## RF   0.0001226 0.0390853 1.0000000            0.09506
+## NNET 0.0011135 1.0000000 0.0485054 0.0066954
+```
+
+```r
+bwplot(difValues)
+```
+
+<img src="PML_-_workshop_files/figure-html/between-Models-4.png" style="display: block; margin: auto;" />
+
+```r
+dotplot(difValues)
+```
+
+<img src="PML_-_workshop_files/figure-html/between-Models-5.png" style="display: block; margin: auto;" />
+
+
+## Predict future outcome
+And now, let's **predict quality** of "our" **new wine** based on **random forest* model:
 
 ```r
 ## our wine parameters (average value of each column)
-our_wine <- as.data.frame(t(apply(X = data[,-12], MARGIN = 2, FUN = mean)))
+mean_values <- apply(X = data[,-12], MARGIN = 2, FUN = mean)
+our_wine <- as.data.frame(t(mean_values))
+our_wine
+```
 
+```
+##   fixed.acidity volatile.acidity citric.acid residual.sugar  chlorides
+## 1      8.319637        0.5278205   0.2709756       2.538806 0.08746654
+##   free.sulfur.dioxide total.sulfur.dioxide   density       pH sulphates
+## 1            15.87492             46.46779 0.9967467 3.311113 0.6581488
+##    alcohol
+## 1 10.42298
+```
+
+```r
 ## predict quality of a wine, which isn't asses yet
 predict(object = model_rf, newdata = our_wine)
 ```
@@ -1072,13 +1413,17 @@ predict(object = model_rf, newdata = our_wine)
 
 
 
-
 ------
+![](https://i.ytimg.com/vi/k5wC5krH8xo/maxresdefault.jpg)
+
+
 # Addition
 2 more datasets from References at the top of this document:
 
-+ Iris data - realy clear model
-+ Loan prediction data - interesting
++ Iris data - realy clear model,  
++ Loan prediction data - interesting.
+
+You can also view my project for the e-course on gitHub: [Predicting an activity from sensors data](https://github.com/pstrauch89/Coursera_PracticalMachineLearning_Project).
 
 
 ### Iris data
@@ -1100,7 +1445,7 @@ qplot(Petal.Length, Petal.Width, col=Species, data = iris) + geom_hline(yinterce
 <img src="PML_-_workshop_files/figure-html/iris-2.png" style="display: block; margin: auto;" />
 
 ```r
-###### we have low data, so only crocc-validation is possible here
+###### we have low data, so only cross-validation is possible here
 
 ## tree
 fit <- train(Species ~., data = iris, method="rpart",
