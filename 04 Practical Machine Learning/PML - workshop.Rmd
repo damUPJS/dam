@@ -342,7 +342,7 @@ model_nnet <- train(quality ~., data = training,
                     trControl = trainControl("cv", number = 7))
 ```
 
-```{r neural network-info, echo=FALSE}
+```{r neural network-info}
 ## info about model
 model_nnet
 plot(model_nnet)

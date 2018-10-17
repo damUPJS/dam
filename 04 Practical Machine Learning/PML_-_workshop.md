@@ -1085,6 +1085,11 @@ model_nnet <- train(quality ~., data = training,
 ```
 
 
+```r
+## info about model
+model_nnet
+```
+
 ```
 ## Neural Network 
 ## 
@@ -1112,7 +1117,16 @@ model_nnet <- train(quality ~., data = training,
 ## The final values used for the model were size = 5 and decay = 0.
 ```
 
+```r
+plot(model_nnet)
+```
+
 <img src="PML_-_workshop_files/figure-html/neural network-info-1.png" style="display: block; margin: auto;" />
+
+```r
+## acc on testing data
+confusionMatrix(reference = testing$quality, data = predict(model_nnet, testing))
+```
 
 ```
 ## Confusion Matrix and Statistics
