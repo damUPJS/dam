@@ -1,0 +1,402 @@
+---
+title: "Spectral clustering"
+author: "E.B."
+date: ''
+output:
+  slidy_presentation:
+    fig_caption: yes
+  ioslides_presentation: default
+  beamer_presentation: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "C:/Big Data/networkScience/community detection")
+
+```
+## Základné pojmy z algebry
+**Vlastné čísal a vlastné vektory** matice $\mathbf{Av=\lambda v}$
+
+Ortogonálne vektory $uv=0$ nazývame ortonormálne, ak $\mathbf{||u||=||v||=1}$
+
+Matice $A,B$ sú **podobné**, ak existuje regularna matica $S$, kde $A=SBS^{-1}$
+
+Reálna **symetrická** matica $A$ je podobná **diagonálnej**, vlastne čísla sú reálne. 
+
+Ak je symetrická matica **pozitívne semidefinitná**  $\mathbf{v^\top Av\ge 0}$, tak $\mathbf{0\le\lambda_1\le\dots\lambda_k}$ kde $\mathbf{k}$ je hodnosť matice.
+
+
+## Príklady
+```{r fig.height = 6, fig.width = 12, fig.align = "center",echo=FALSE}
+library(kernlab)
+data(spirals)
+km_sp<-kmeans(spirals,centers = 2,iter.max = 1000)
+
+{
+par(mfrow=c(1,2))
+plot(spirals)
+plot(spirals,col=km_sp$cluster)
+}
+```
+
+##
+```{r fig.height = 7, fig.width = 10, fig.align = "center", echo=FALSE,message=FALSE}
+library("proxy")
+simD<-simil(spirals, method = "Euclidean")
+simD<-as.matrix(simD)
+simD[is.na(simD)]<-0
+simD[simD<0.84]<-0
+simD[simD>=0.84]<-1
+library(igraph)
+Gspiral<-graph.adjacency(as.matrix(simD),mode = "undirected")
+V(Gspiral)$size=3
+V(Gspiral)$size2=3
+V(Gspiral)$label=""
+V(Gspiral)$shape="circle"
+E(Gspiral)$color="black"
+L_spil<-graph.laplacian(Gspiral,normalized = FALSE)
+le_spil<-eigen(L_spil)
+c_spil<-le_spil[[2]][,299]
+c_spil[c_spil>=0.0222]<-1
+c_spil[c_spil<0.0222]<-2
+plot(Gspiral, layout=spirals,asp=0)
+```
+
+##
+
+```{r fig.height = 8, fig.width = 10, fig.align = "center", echo=FALSE,message=FALSE}
+library(flexdashboard)
+plot(Gspiral, layout=spirals,asp=0,vertex.color=c_spil)
+
+```
+
+##Základná myšlienka grafovej reprezentácie:
+**Cieľ:** rozdelenie vrcholov do zhlukov tak, aby sme minimalizovali hrany medzi zhlukmi a zároveň boli tieto zhluky vyvážené. 
+
+Teda na rozdiel úlohy minimálneho rezu v grafe, ktorá potenciálne ústi ku separácii jedného vrchola v našom prípade (H), sa snažíme dodať navyše podmienku znevýhodňujúcu riešenia s výrazne rozdielnými veľkostami zhlukov.   
+
+
+```{r adjacent, include=FALSE}
+
+W<-matrix(c(0,1,1,1,1,0,0,0,
+            1,0,1,0,1,1,0,0,
+            1,1,0,1,0,0,0,0,
+            1,0,1,0,1,0,0,0,
+            1,1,0,1,0,0,1,0,
+            0,1,0,0,0,0,1,1,
+            0,0,0,0,1,1,0,1,
+            0,0,0,0,0,1,1,0), 
+        nrow = 8,ncol= 8,byrow=TRUE,dimnames = list(c("A","B","C","D","E","F","G","H"),c("A","B","C","D","E","F","G","H")));
+library(igraph)
+GraphObject = graph.adjacency(W,mode = "undirected");
+```
+
+
+```{r echo=FALSE}
+plot(GraphObject,mark.groups = list(c(1,2,3,4,5),c(6,7,8),c(8)),mark.shape = 1/2,vertex.label.dist=3)
+
+
+```
+
+
+## Zakódujme úlohu 
+Uvažujme na začiatok graf bez váh hrán a rozdelenie na dva zhluky.
+
+1. Minimalizujem počet hrán medzi zhlukmi, teda pre zvolené rozdelenie chceme vyhjadriť počet hrán medzi zhlukmi.
+    + rozdelenie do zhlukov pomocou indikačného vektora $f=(1,1,1,1,1,-1,-1,-1)$
+    + **upravená** matica incidencie $H$ *(vrcholovo-hranová)* 
+        + pre jeden z koncových vrcholov každej hrany sa použije $-1$
+\[
+  \begin{array}{l|ccccccccccccc}
+  & ab & ac & ad & ae & bc & be & bf & cd & de & eg & fg & fh & gh\\
+A &  1 &  1 &  1 &  1 &  0 &  0 &  0 &  0 &  0 &  0 &  0 &  0 &  0\\
+B & -1 &  0 &  0 &  0 &  1 &  1 &  1 &  0 &  0 &  0 &  0 &  0 &  0\\
+C &  0 & -1 &  0 &  0 & -1 &  0 &  0 &  1 &  0 &  0 &  0 &  0 &  0\\
+D &  0 &  0 & -1 &  0 &  0 &  0 &  0 & -1 &  1 &  0 &  0 &  0 &  0\\
+E &  0 &  0 &  0 & -1 &  0 & -1 &  0 &  0 & -1 &  1 &  0 &  0 &  0\\
+\hline
+F &  0 &  0 &  0 &  0 &  0 &  0 & -1 &  0 &  0 &  0 &  1 &  1 &  0\\
+G &  0 &  0 &  0 &  0 &  0 &  0 &  0 &  0 &  0 & -1 & -1 &  0 &  1\\
+H &  0 &  0 &  0 &  0 &  0 &  0 &  0 &  0 &  0 &  0 &  0 & -1 & -1\\
+  \end{array}
+\]
+
+Potom v našom prípade  $\frac{1}{2}f^\top H=(0,0,0,0,0,0,1,0,0,1,0,0,0)$
+a teda vo všeobecnosti počet hrán medzi zhlukmi vieme vyjadriť ako $$\frac{1}{2}f^\top H(f^\top H)^\top \frac{1}{2}=\frac{1}{4}f^\top H H^\top f$$ 
+
+## Vybalansovanie zhlukov 
+
+Pre \textbf{nevyvážené} rozdelenie $f$ by sme mali zaviesť \textbf{penalizáciu}
+
++ Modifikovaním indikačného vektora
+    
+  $$f_i=\Bigg\{^{\sqrt{\frac{|\bar{A}|}{|A|}} \quad \text{pre} \quad  v_i \in A}_{-\sqrt{\frac{|A|}{|\bar{A}|}} \quad \text{pre} \quad v_i \bar{A}}$$
+    
++ hrany budú započítané s váhou $( \frac{|A|}{|\bar{A}|} + \frac{|\bar{A}|}{|A|})$, navyše $\quad \sum_{i=1}^{n}{f_i}=\sum_\limits{i\in A}{\sqrt{\frac{|\bar{A}|}{|A|}}}-\sum_\limits{i\in \bar{A}}{\sqrt{\frac{|A|}{|\bar{A}|}}}=|A|\sqrt{\frac{|\bar{A}|}{|A|}}-|\bar{A}|\sqrt{\frac{|A|}{|\bar{A}|}}=0$
+a teda $f \perp (1,\dots,1)$ a zároveň $||f||^2 =n$ pre $|V|=n$.
+
+Úloha  $f^\top L f \rightarrow \min_{A \subset V}$,  kde $L=HH^\top = D-A$ pre spomínané podmienky je NP ťažká. $D$ je diagonálna matica so stupňami vrcholov na hlavnej diagonále, $A$ je matica susednosti graf
+
+##Zjemnenie podmienky
+
+$\min f^\top L f$ za predpokladu $f \in R^n$ pre $f \perp (1,\dots,1) \quad f^\top f=n$
+
+
+### Rayleigh Ritz
+Nech $A$ je symetrická matica $n \times n$ s vlastnými číslami $\lambda_1\le\lambda_2\le\dots\le\lambda_n$ a $u_1,\dots,u_n$ je odpovedajúca ortonormálna báza vlastných vektorov $A$ potom $$\min\limits_{x\neq 0} \frac{x^\top A x}{x^\top x}=\lambda_1$$ kde sa mininum dosahuje pre $x=u_1$.
+Resp.  $$\min\limits_{x\neq 0,x\in\{u_1\dots,u_{i-1}\}^\bot} \frac{x^\top A x}{x^\top x}=\lambda_i$$ kde sa mininum dosahuje pre $x=u_i$.
+
+Vlastný vektor prislúchajúci \textbf{druhému najmenšiemu vlastnému číslu} matie $L$ dobre aproximuje riešenie.
+
+
+## Najdenie  k zhlukov pre $K>2$ 
+
+4. Pre každý zhluk samostatný indikačný vektor $(f^1,\dots,f^k)=F$ kde
+$$f^i_j=\bigg\{^{\sqrt{\frac{1}{|A_i|}} \quad \text{pre} \quad  v_j \in A_i}_{0 \quad \text{inak}}$$ 
+\break
+\newline
+Indikačné vektory sú navzájom ortogonálne teda $F.F^\top =I$ 
+
+Minimalizujeme $\sum_1^kf^i.L.f^{i\top}$ teda minimalizujeme súčet prvkov na hlavnej diagonale $\sum_i^k(FLF^\top)_{ii}=Tr(FLF^\top)$   
+
+Opä je nutné zjenenie podmienok 
+
+## Zjemnenie podmienok pre k>2
+
+$\min_\limits{F\in \mathcal{R}^{r\times n}} Tr(FLF^\top)$ za predpokladu $F.F^\top =I$
+
+###Poincaré separation theorem 
+Nech $A$ je symetrická matica $n \times n$ s vlastnými číslami $\lambda_1\le\lambda_2\le\dots\le\lambda_n$ a $R$ je matica $n\times m$ taká, že $R^\top R=I$ pre $m\le n$, a $B=R^\top AR$ s vlastnými číslami $\mu_1\le\mu_2,\dots\le\mu_m$.
+
+Potom: 
+
+  1.$$\lambda_i\le\mu_i\le\lambda_{n-m+i},\space i= 1,\dots,m$$  
+  
+  2.Ak $\lambda_i=\mu_i$ potom existuje vlastný vektor $v$ matice $B$ s vlastným číslom $\mu_i$ pričom $Rv$ je vlastným vektorom $A$ s vlastným číslom $\lambda_i$  
+  
+###Dôsledok 
+$$\lambda_1+\dots+\lambda_i\le Tr(R^\top AR)\le\lambda_{n-m+1}+\dots \lambda_n$$
+
+Riešenie aproximuje k vlastných vektorov prislúchajúcich najmenším k vlastným číslam. 
+Na identifikáciu k zhlukov  aplikujeme napr. \textbf{k-means} na body tvorené jdenotlivými zložkami daných vektorov.
+
+
+##Vážené hrany 
+
+V prípade váh hrán je $|A^j|$ nahradená  $Vol(A^j)=\sum d_i$ pre $v_i \in A^j$
+
+ $$f_i=\Bigg\{^{\sqrt{\frac{Vol(A)}{Vol(\bar{A})}} \quad \text{pre} \quad  v_i \in\bar{A}}_{-\sqrt{\frac{Vol(\bar{A})}{Vol(A)}} \quad \text{pre} \quad v_i \in A}$$ 
+ 
+Optimalizačná úloha pre k=2 má tvar:
+
+
+$\min f^\top L f$,  kde $f^\top D f =vol(V)$ a  $Df\perp (1,\dots,1)$.
+
+
+Ak položíme $f=D^{-\frac{1}{2}}g$ minimalizujeme 
+
+$\min g^\top D^{-\frac{1}{2}} LD^{-\frac{1}{2}}g$,  kde $g^\top g =vol(V)$ a  $D^{\frac{1}{2}}g\perp (1,\dots,1)$.
+
+
+Riešením je vlastný vektor odpovedajúci najmenšiemu nenulovému vlastnému číslu symetrickej Laplasovej matici $$L_{sym}=D^{-\frac{1}{2}} LD^{-\frac{1}{2}}$$  
+
+
+##Ako získať vlastné vektory pri veľkých maticiach 
+
+Motivácia je "Power iteration"
+Pre maticu $A$  $n \times n$ a náhodný vektor $v$ postupnosť $v,Av.A^2v,A^3v,\dots$ konverguje ku dominantnému vlastnému vektoru.
+
+Priestor $[v,Av.A^2v,A^3v,\dots,A^mv]$ sa nazýva Kyrlov podpriestor matice $A$ vzhľadom na vektor $v$ oznacuje sa $K_m(A,v)$ 
+
+###Poincaré
+... pre $B=R^\top AR$ kde  $R^\top R=I$ s vlastnými číslami $\mu_1\le\mu_2,\dots\le\mu_m$.
+
+$$\lambda_i\le\mu_i\le\lambda_{n-m+i},\space i= 1,\dots,m$$  
+
+Vhodnou modifikáciou vytvárania bázy (ortogonalnej) tohto priestoru v jednotlivých iteráciach vieme aproximovať aj ďalšie vlastné vektory.
+
+Viď. symetricke matice Lanczosová metóda resp. Arnoldiho
+
+Rýchlejšie konverguju v krajoch spektra ako v strede, vieme efektívnejšie aproximovať prvých $k$ vlastných čísel ako robiť spektrálny rozklad.
+
+
+## Konduktancia a Cheeger-ová nerovnosť (ako dobrý je rez?)
+
+Pre graf G definujeme konduktanciu ako $$\phi_G=\min\limits_{S\subset V}\frac{\delta(S)}{\min\{vol(S),vol(\bar S)\}}$$ kde $\delta (S)$ suma váh hrán rezu $S$ a $\bar{S}$
+
+Nech $G$ súvislý graf s konfuktaciou $\phi(G)$ a $\gamma$ je konduktancia rezu spetrálneho algoritmu aplikovaného na normalizovanej Laplacovej matici $\cal{L}$ s druhým najmenším vlastným číslom $\lambda_2$. Potom platí:
+$$\frac{\lambda_2}{2}\le\phi(G)\le\gamma\le\sqrt{2\lambda_2} $$
+
+##Spektrálny rozklad na datasete spoluautorov
+IGRAPH 3585f10 U--- 1589 2742 -- 
++ attr: id (v/n), label (v/c), value (e/n)
+
+```{r echo=FALSE }
+#Vyberieme iba najväčší komponent 
+
+library(igraph)
+coaut<-read.graph("C:/Big Data/dataset/unditected community/coautor/netscience.gml",format="gml")
+#nacitame graf a pozrieme jeho komponenty 
+maxClast<-clusters(coaut)
+
+```
+
+```{r echo=FALSE}
+#Identifikujeme najväčší komponent súvislosti
+i2<-maxClast$membership
+#hist(i2,freq = TRUE,breaks=400,ylim=c(1,400))
+```
+
+
+Vytvoríme indukovaný podgraf z jedného komponenu 
+```{r echo=FALSE}
+Comp<-induced_subgraph(coaut,which(i2==11))
+summary(Comp)
+
+V(Comp)$size=3
+V(Comp)$size2=3
+V(Comp)$label=""
+V(Comp)$label.cex=0.7
+V(Comp)$label.font=2
+V(Comp)$shape="circle"
+E(Comp)$width=1
+E(Comp)$color="black"
+#E(coaut)$label=round(E(coaut)$weight,2)
+
+l_out<-layout.kamada.kawai(Comp)
+plot(Comp,layout=l_out,asp=0)
+```
+
+##Spektrum Laplacovej matice
+```{r echo=FALSE}
+L_sym<-graph.laplacian(Comp,normalized = FALSE)
+e<-eigen(as.matrix(L_sym))
+{plot(c(1:379),e[[1]],xlim = c(350,379),ylim=c(0,.5));
+abline(h=0);
+abline(h=e[[1]][373])}
+```
+
+##Rez podľa druhého vlastného vektora (kladné zložky identifikujú jede kláster, záporné druhý)
+
+```{r fig.height = 10, fig.width = 10, fig.align = "center",echo=FALSE}
+col2<-e[[2]][,378]
+col2[col2>=0]<-1
+col2[col2<0]<-2
+
+plot(Comp,layout=l_out,asp=0,vertex.color=col2)
+
+```
+
+##Zobrazenie klástrov podľa prvých 6 najmenších vlastných čísel, podpriestor klastrovaný pomocou k-means  
+```{r fig.height = 7, fig.width = 10, fig.align = "center",echo=FALSE}
+v<-e[[2]][,373:379]
+k<-kmeans(v, centers = 7, iter.max = 1000, nstart = 1000,algorithm = c("Hartigan-Wong", "Lloyd", "Forgy","MacQueen"), trace=FALSE);
+library(cluster)
+k.sil<-signif(mean(silhouette(k$cluster, dist(v))[, 3]),digits = 4);
+plot(Comp,layout=l_out,asp=0,vertex.color=k$cluster, vertex.label=k$cluster)
+
+```
+
+##Detail časti grafu
+
+```{r fig.height = 7, fig.width = 10, fig.align = "center",echo=FALSE }
+vertex_attr(Comp,"class")<-k$cluster
+vertex_attr(Comp,"test")<-k$cluster
+#ukazka<-V(Comp2_7)$id
+#saveRDS(ukazka,"ukazka")
+ukazka<-readRDS("ukazka")
+Comp2_7<-induced_subgraph(Comp,which(V(Comp)$id %in% ukazka))
+V(Comp2_7)$size=3
+V(Comp2_7)$size2=3
+V(Comp2_7)$label=""
+V(Comp2_7)$label.cex=0.7
+V(Comp2_7)$label.font=2
+V(Comp2_7)$shape="circle"
+E(Comp2_7)$width=1
+E(Comp2_7)$color="black"
+#E(coaut)$label=round(E(coaut)$weight,2)
+l_out2_7<-layout.kamada.kawai(Comp2_7)
+plot(Comp2_7,layout=l_out2_7,asp=0,vertex.color=V(Comp2_7)$class)
+```
+
+##Ďalší výrazný odskok je pri 27 vlastnom čísle teda príklad ako to klastruje ak zoberiem viac vektorov s použitím  k-means
+
+```{r fig.height = 7, fig.width = 8, fig.align = "center", echo=FALSE}
+v2<-e[[2]][,353:379]
+k2<-kmeans(v2, centers = 27, iter.max = 1000, nstart = 1000,algorithm = c("Hartigan-Wong", "Lloyd", "Forgy","MacQueen"), trace=FALSE);
+vertex_attr(Comp,"class2")<-k2$cluster
+Comp27<-induced_subgraph(Comp,which(V(Comp)$id %in% ukazka))
+V(Comp27)$size=5
+V(Comp27)$size2=5
+V(Comp27)$label=""
+V(Comp27)$label.cex=0.6
+V(Comp27)$label.font=1
+V(Comp27)$shape="circle"
+E(Comp27)$width=1
+E(Comp27)$color="black"
+#E(coaut)$label=round(E(coaut)$weight,2)
+
+l_out27<-layout.kamada.kawai(Comp27)
+plot(Comp27,layout=l_out27,asp=0,vertex.color=V(Comp27)$class2,vertex.label=V(Comp27)$class2)
+
+```
+
+##Porovnanie so skutočným rozdelením na komunity 
+
+-rozdelenie jedného športového klubu na samostatné kluby  
+
+```{r echo=FALSE}
+
+library(igraphdata)
+data(karate)
+L_karate<-graph.laplacian(karate,normalized = TRUE)
+e_karate<-eigen(L_karate)
+plot(karate,asp=0,vertex.color=1)
+```
+
+##Spektrum
+```{r echo=FALSE}
+{plot(x=c(1:34),y=e_karate[[1]])}
+```
+
+## 
+```{r fig.height = 7, fig.width = 7, fig.align = "center", echo=FALSE}
+col_karate<-e_karate[[2]][,33]
+col_karate[col_karate>=0]<-1
+col_karate[col_karate<0]<-2
+V(karate)$size=10
+V(karate)$size2=10
+V(karate)$shape="circle"
+E(karate)$width=1
+E(karate)$color="black"
+#E(coaut)$label=round(E(coaut)$weight,2)
+
+plot(karate,asp=0,vertex.color=col_karate,vertex.label=V(karate)$Faction)
+```
+
+
+```{r fig.height = 7, fig.width = 7, fig.align = "center",echo=FALSE,eval=FALSE}
+c_walk<-walktrap.community(karate,steps = 5)
+plot(karate,asp=0,vertex.color=c_walk$membership,vertex.label=V(karate)$Faction)
+```
+
+
+```{r ,eval=FALSE,echo=FALSE}
+library(RSpectra)
+system.time({le<-eigs_sym(L_sym,k = 20,which = "SA")})
+system.time({e<-eigen(L_sym)})
+mc1
+L_amazon<-graph.laplacian(mc1,normalized = TRUE)
+system.time({le<-eigs_sym(L_amazon,k = 20,which = "SA")})
+system.time({e<-eigen(L_amazon)})
+v_amaz<-le[[2]]
+k_amaz<-kmeans(v_amaz, centers = 20, iter.max = 1000, nstart = 1000,algorithm = c("Hartigan-Wong", "Lloyd", "Forgy","MacQueen"), trace=FALSE);
+library(cluster)
+k_amaz.sil<-signif(mean(silhouette(k_amaz$cluster, dist(v_amaz))[, 3]),digits = 4);
+summary(k_amaz)
+
+
+
+View(le[[2]])
+
+```
