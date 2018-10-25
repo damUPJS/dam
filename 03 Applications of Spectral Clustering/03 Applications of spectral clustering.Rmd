@@ -1,0 +1,348 @@
+---
+title: "Random walk and diffusion on network"
+author: "E.B."
+date: ''
+output:
+  slidy_presentation:
+    fig_caption: yes
+  html_document:
+    mathjax: local
+    self_contained: no
+  pdf_document:
+    latex_engine: pdflatex
+  ioslides_presentation: default
+---
+
+```{r setup, echo=FALSE, fig.width=12, fig.height=8,message=FALSE}
+library(igraph)
+coaut<-read.graph("C:/Big Data/dataset/unditected community/coautor/netscience.gml",format="gml")
+maxClast<-clusters(coaut)
+i2<-maxClast$membership
+Comp<-induced_subgraph(coaut,which(i2==11))
+
+V(Comp)$size=3
+V(Comp)$size2=3
+V(Comp)$label=""
+V(Comp)$label.cex=0.7
+V(Comp)$label.font=2
+V(Comp)$shape="circle"
+E(Comp)$width=1
+E(Comp)$color="gray"
+#E(coaut)$label=round(E(coaut)$weight,2)
+
+l_out<-layout.kamada.kawai(Comp)
+
+ukazka<-readRDS("ukazka")
+Comp2_7<-induced_subgraph(Comp,which(V(Comp)$id %in% ukazka))
+V(Comp2_7)$size=3
+V(Comp2_7)$size2=3
+V(Comp2_7)$label=""
+V(Comp2_7)$label.cex=0.7
+V(Comp2_7)$label.font=2
+V(Comp2_7)$shape="circle"
+E(Comp2_7)$width=1
+E(Comp2_7)$color="black"
+#E(coaut)$label=round(E(coaut)$weight,2)
+l_out2_7<-layout.kamada.kawai(Comp2_7)
+
+```
+
+
+##  Random walk motivácia 
+* Uvažujeme neorientovaný súvislý graf
+
+* Aká je pravdepodobnosť prechodu z $i$ do $j$  
+
+```{r echo=FALSE,fig.width=8, fig.height=6}
+library(igraph)
+g<-graph.adjacency(matrix(c(0,1/4,1/4,1/4,1/4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),nrow = 5,ncol = 5,byrow = TRUE),mode = "undirected",weighted = TRUE)
+
+E(g)$label=c("1/4","1/4","1/4","1/4")
+plot(g)
+```
+
+---
+
+* Ako sa zmeni v i-tom kroku pravdepodobnost vo vrchole 
+```{r echo=FALSE,fig.width=8, fig.height=6}
+V(g)$label=c("p1","p2","p3","p4","p5")
+plot(g,vertex.label.dist=3,edge.label="")
+```
+$$p1=\frac{p2}{d(2)}+\frac{p3}{d(3)}+\frac{p4}{d(4)}+\frac{p5}{d(5)}$$
+
+
+$$\pi_i^t=\sum_{j=1}^n\frac{w_{ij}}{d_j}\pi_j^{t-1}$$
+
+---
+
+**Zmenu rozdelnia** pravdepodobnosti v čase $t$ vieme vyjadriť 
+
+$\pi^t=\pi^{t-1}D^{-1}W$  
+
+Označme $P=D^{-1}W$ **maticu prechodu** kde $p_{ij}=w_{i,j}/d_i$ je pravdepodobnosť prechodu z vrcholu $v_i$ do vrcholu $v_j$. Nech $\pi^0$ je vektor **počiatočných pravdepodobnosti** výskytu vo vrcholoch grafu $\sum \pi_i^0=1$. 
+
+
+Pre súvislý nie bipartitný graf, **proces konverguje** ku stacionarnemu rozdeleniu 
+
+$P.\pi=\pi$ teda $1$ je vlastné číslo matice prechodu $P=D^{-1}W$. 
+
+
+**Stacionárne rozdelenie** vieme vyjadriť nasledovne: 
+
+$\pi_{i}=\frac{d_i}{vol(G)}$ kde $vol(G)=\sum_{i\in V}{d_i}$
+
+
+---
+
+```{r eval=FALSE, echo=FALSE}
+devtools::install_github("leonawicz/mapmate")
+```
+
+
+```{r , echo=FALSE}
+library(igraph)
+
+P<-get.adjacency(Comp2_7,names = TRUE,type= "both",sparse = FALSE )
+I<-diag(rep(1,nrow(P)))
+P<-P+I
+d<-apply(P,1,function(x)1/sum(x))
+#minimalnu hodnotu lebo berieme prevratenu hodnotu 
+m<-min(d)
+C<-diag(d)
+P<-C%*%P
+phi<-apply(P,1,function(x) 1/length(x))
+phi[]<-0
+#prvy s najvassim stupnom
+phi[2]<-1
+r<-max(phi)
+l_bel<-sapply(phi,function(x) rgb(1,1-x/r,1))
+```
+
+```{r example1, echo=FALSE, fig.show='animate', fig.width=12, fig.height=8}
+plot(Comp2_7,layout=l_out2_7,vertex.color=l_bel,asp=0)
+for(i in 1:10){
+  phi<-phi%*%P
+  r<-max(phi)
+  l_bel<-sapply(phi,function(x) rgb(1,1-ifelse(x/r>1,1,x/r),1))
+  plot(Comp2_7,layout=l_out2_7,vertex.color=l_bel,asp=0)
+}
+```
+
+
+---
+
+```{r , echo=FALSE}
+library(igraph)
+
+P<-get.adjacency(Comp2_7,names = TRUE,type= "both",sparse = FALSE )
+I<-diag(rep(1,nrow(P)))
+P<-P+I
+d<-apply(P,1,function(x)1/sum(x))
+#minimalnu hodnotu lebo berieme prevratenu hodnotu 
+m<-min(d)
+C<-diag(d)
+P<-C%*%P
+phi<-apply(P,1,function(x) 1/length(x))
+phi[]<-0
+#prvy s najvassim stupnom
+phi[1]<-1
+r<-max(phi)
+l_bel<-sapply(phi,function(x) rgb(1,1-x/r,1))
+```
+
+```{r example2, echo=FALSE, fig.show='animate', fig.width=12, fig.height=8}
+plot(Comp2_7,layout=l_out2_7,vertex.color=l_bel,asp=0)
+for(i in 1:10){
+  phi<-phi%*%P
+  r<-max(phi)
+  l_bel<-sapply(phi,function(x) rgb(1,1-ifelse(x/r>1,1,x/r),1))
+  plot(Comp2_7,layout=l_out2_7,vertex.color=l_bel,asp=0)
+}
+```
+
+
+##Walktrap - motivácia
+
+Využijeme tendenciu procesu zdržiavať sa v **hustých podgrafoch**.
+
+Spočitame pravdepodobnosť prechodu z vrchola $i$ do vrchola $j$ po $t$ krokoch $P^t_{ij}$
+
+Ak sú vrcholy v rovnakej komunite bude táto pravdepodobnosť relatívne vysoká 
+Naopak to nemusí platiť.
+
+Ak $j,i$ su v rovnakej komunite "vidia" ostatné vrcholy tejto komunity rovnako 
+$\forall  k P_{ik}^t\simeq P_{jk}^t $.
+
+Teda definujem vzdialenosť medzi $i,j$ na základe toho ako rozdielne vidia okolie. 
+
+$$r_{i,j}=\sqrt{\sum_{k=1}^n{\frac{(P_{ik}^t-P_{jk}^t)^2}{d_k}}}=\|D^{-\frac{1}{2}}P_{i\bullet}^t-D^{-\frac{1}{2}}P_{j\bullet}^t\|$$
+
+Pravdepodobnosť že sa z komunity $C$ dostanem do vrchola $j$ je 
+
+$P_{Cj}=\frac{1}{|C|}\sum\limits_{i\in C}P_{ij}^t$ teda $P_{C\bullet}^t$
+
+Teda vzdialenosť medzi komunitami je $$r_{C_1C_2}=\sqrt{\sum_{k=1}^n{\frac{(P_{C_1k}^t-P_{C_2k}^t)^2}{d_k}}}$$
+
+## algoritmus
+Inšpirácia vo Wardovej aglomeratívnej metóde. 
+
+  1.Začíname z jednovrcholovými komunitami $\mathcal P_0=\{\{v\},v\in V\}$
+  2. Vyberieme dve susediace komunity vzhľadom na vzdialenosť a zlúčime ich 
+  3. Aktualizujeme vzdialenosť medzi susednými komunitami 
+  
+  Cieľom je v každom kroku minimalizovať $$\sigma_k=\frac{1}{n}\sum\limits_{C \in \cal P_k}\sum\limits_{i \in C}r_{iC}^2$$ 
+  
+  Aproximujeme $greedy$ metódou.
+  V každom kroku pre susedné komunity spočítame $\Delta\sigma(C_1,C_2)=\frac{1}{n}(\sum\limits_{i\in C_3}{r_{iC_3}^2}-\sum\limits_{i\in C_2}{r_{iC_2}^2}-\sum\limits_{i\in C_1}{r_{iC_1}^2})$
+  Tie z najmenšou hodnotou $\Delta\sigma$ zlúčime.
+
+Vyhodnotenie na základe zmeny $$\eta_k= \frac{\sigma_{k+1}-\sigma_k}{\sigma_{k}-\sigma_{k-1}}$$ 
+
+---
+```{r , echo=FALSE}
+library(igraph)
+
+P<-get.adjacency(Comp,names = TRUE,type= "both",sparse = FALSE )
+d<-apply(P,1,function(x)1/sum(x))
+#minimalnu hodnotu lebo berieme prevratenu hodnotu 
+m<-min(d)
+C<-diag(d)
+P<-C%*%P
+phi<-apply(P,1,function(x) 1/length(x))
+phi[]<-0
+#prvy s najvassim stupnom
+phi[which(d==m)[1]]<-1
+r<-max(phi)
+l_bel<-sapply(phi,function(x) rgb(1,1-x/r,1))
+```
+
+```{r walk2, echo=FALSE, fig.show='animate', fig.width=12, fig.height=8 }
+plot(Comp,layout=l_out,vertex.color=l_bel,asp=0)
+for(i in 1:100){
+for (count in seq(5)) {
+  phi<-phi%*%P
+  r<-max(phi)
+  l_bel<-sapply(phi,function(x)rgb(1-ifelse(x/r>1,1,x/r),1-2*ifelse(x/r>1/2,1/2,x/r),1-ifelse(x/r>1,1,x/r)))
+}
+  plot(Comp,layout=l_out,vertex.color=l_bel,asp=0)
+}
+```
+
+
+
+##Local Random walk
+
+Verzia random walk, kde v každom kroku môže zotrvať vo vrchole s pravdepodobnosťou $\mu$
+$\pi^{t+1}=\mu  \pi^t + (1-\mu)\pi^{t}P$    pre $\mu=\frac{1}{2}$
+
+Potom maticiu prechodu vieme zapísať $$P=\frac{1}{2}(I+D^{-1}W)$$
+
+
+Pracovať budeme s PageRank variantou 
+$$ pr(\alpha,s)=\alpha  s + (1-\alpha)pr(\alpha,s)P $$
+**Teleportačná konštanta** $\alpha \in (0,1]$  a $s$ je preferenčný vektor 
+
+
+Cieľom je aproximovať $pr(\alpha,s)$  
+
+Využijeme fakt
+
+$$ pr(\alpha,s)=\alpha  s + (1-\alpha)pr(\alpha,sP) $$
+Teda $pr(\alpha,s)$ aproxumujeme vektorom $p$ s rezidualným vektorom $r$
+
+  $$pr(\alpha,s)=p + pr(\alpha,r)$$
+---
+Pre vrchol $u$ defuinujeme nasledovnú operáciu
+$\text{push}_u(p,r)$
+
+$p^\prime(u)=p(u)+\alpha r(u)$
+
+$r^\prime(u)=(1-\alpha)r(u)/2 $
+
+Pre $v; (u,v)\in E$ modifikujem reziduá $r^\prime(v)=r(v)+(1-\alpha) r(u)/(2d(u))$
+
+Pre ostatné $v$ nech $p^\prime(v)=p(v)$ a $r^\prime(v)=r(v)$
+
+$$ p^\prime + pr(\alpha,r^\prime)=p + pr(\alpha,r) $$
+
+## algoritmhus
+
+1. $p=\overrightarrow{0}, r=\chi_v$
+2. Pokial $\max\limits_{u\in V}\frac{r(u)}{d(u)}>\epsilon$
+  zober $u$ kde $r(u)/d(u)>\epsilon$ a aplikuj $\text{push}_u$ a aktualizuj vektory $p,r$
+3. vrať $p=apr(\alpha,\chi_v,r)$ 
+
+
+
+##Heat kernel
+* Motiácia širenie tepla v záislosti od času $t$ a $C$ difúzneho koeficientu 
+* Neorientovaný súvislý graf
+
+Zemna hodnoty vo vrchole $i$ je priamoúmerná rozdielu rozdielu hodnôt voči susedom, času a difuznej konštanty teda je to možné zapísať $$\phi_i(t+1)=\phi_i(t)+\sum_{j=1}^n{W_{ij}(\phi_j(t)-\phi_i(t))C \delta_t }$$
+
+* Vyjadrenie zmeny hodnoty 
+
+$$\frac{\mathbf{d}\phi_i(t)}{\mathbf{d}t}=C\sum_{j=1}^n{W_{ij}(\phi_j(t)-\phi_i(t))}$$
+$$\frac{\mathbf{d}\phi_i(t)}{\mathbf{d}t}=C(\sum_{j=1}^n{W_{ij}\phi_j(t)}-\sum_{j=1}^n{W_{ij}\phi_i(t)})=C(\sum_{j=1}^n{W_{ij}\phi_j(t)}-d_i\phi_i(t))=C\sum_{j=1}^n{(W_{ij}-D_{ij})\phi_j(t)}$$
+$$\frac{\mathbf{d}\phi_i(t)}{\mathbf{d}t}=-C\sum_{j=1}^n{L_{ij}\phi_j(t)}$$
+
+##  Riešenie homogenného systému linearnych dif. rovníc prvého rádu.
+
+$$\frac{\mathbf{d}\boldsymbol\phi}{\mathbf{d}t}=-C.L\boldsymbol\phi(t)$$
+
+* Fundamentálny systém riešení homogenného systému linearných diferenciálnych rovníc s konštantnými koeficientami má tvar 
+
+$\theta_i= \mathbf{x_i}e^{\lambda_i t}$ kde $\lambda_i$ sú vlastné čísla maticového operátora a $\mathbf{x_i}$ sú prislúchajúce vlastné vektory
+
+Všeobecné riešenie $\boldsymbol\phi(t)=\sum_i{a_i(0)\mathbf{x_i}e^{-C\lambda_i t}}$
+
+Ako to konverguje v čase $t\rightarrow \infty$  $\boldsymbol\phi=a_1(0)\mathbf{x_1}$
+Kedže sa nám objem nestraca iba sa prerozdeluje v čase platí $\boldsymbol\phi(0)=a_1(0)\frac{\mathbf e}{\sqrt N}$ teda $a_1(0)=\boldsymbol\phi(0)^\top \mathbf x_1 =\frac{1}{\sqrt N}\sum\phi_i(0)$
+
+Teda $$ \lim_{t\rightarrow\infty}\boldsymbol\phi(t)=(\frac{1}{N}\sum\phi_i(0))\mathbf e $$
+
+Rovnomerné rozdelenie počiatočného objemu v sieti  
+
+* Taylorov rozvoj (heat kernel)
+
+$$\boldsymbol\phi(t)=e^{-LD^{-1}t}=e^{-t}\sum_k^\infty\frac{t^k}{k!}WD^{-1}f$$
+
+* porovnanie s Lazy Random walk
+
+$$\boldsymbol\pi(t)=\alpha\sum_k^\infty{(1-\alpha)^kWD^{-1}f}$$
+
+
+
+
+
+
+---
+```{r , echo=FALSE}
+library(igraph)
+
+P<-get.adjacency(Comp,names = TRUE,type= "both",sparse = FALSE )
+I<-diag(rep(1,nrow(P)))
+P<-P+I
+d<-apply(P,1,function(x)1/sum(x))
+#minimalnu hodnotu lebo berieme prevratenu hodnotu 
+m<-min(d)
+C<-diag(d)
+P<-C%*%P
+phi<-apply(P,1,function(x) 1/length(x))
+#phi[]<-0
+#prvy s najvassim stupnom
+#phi[which(d==m)[1]]<-1
+r<-max(phi)
+l_bel<-sapply(phi,function(x) rgb(1,x/r,1))
+```
+
+```{r walk, echo=FALSE, fig.show='animate', fig.width=12, fig.height=8,eval=FALSE}
+plot(Comp,layout=l_out,vertex.color=l_bel,asp=0)
+for(i in 1:100){
+  phi<-phi%*%P
+  r<-max(phi)
+  l_bel<-sapply(phi,function(x) rgb(1,1-ifelse(x/r>1,1,x/r),1))
+  plot(Comp,layout=l_out,vertex.color=l_bel,asp=0)
+}
+```
+
