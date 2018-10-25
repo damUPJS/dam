@@ -13,4 +13,7 @@ P.č.       | Dátum      | Téma                                | Prednášajú
 02         | 03.10.2018 | Spectral Clustering                 | Erik Bruoth
 03         | 10.10.2018 | Applications of spectral clustering | Erik Bruoth
 04         | 17.10.2018 | Practical Machine Learning          | Peter Štrauch
-05         | 24.10.2018 | Save the vineyard                   | Stanislav Hrivňak
+05         | 24.10.2018 | Save the vineyard: Part 1           | Stanislav Hrivňak
+06         | 07.11.2018 | Save the vineyard: Part 2           | Stanislav Hrivňak
+07         | 14.11.2018 |                                     | Tomáš Kocák
+08         | 21.11.2018 |                                     | Michal Čokina
