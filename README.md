@@ -20,4 +20,4 @@ P.č.       | Dátum      | Téma                                        | Predn
 09         | 28.11.2018 | 3D modeling of the countryside              | Ján Kaňuk
 10         | 5.12.2018  | From fighting cancer to recognising landmarks | Daniel Kuchta
 11         | 12.12.2018 | Marriage of neuroscience and robotics       | Keerthi Doreswami
-12         | 19.12.2018 |                                             | Gabriela Andrejková
+12         | 19.12.2018 | Neurónové siete a geomagnetické búrky       | Gabriela Andrejková
