@@ -5,7 +5,16 @@ V tomto adresári nájdete:
 + **materiály** zo stretnutí komunity DAM na UPJŠ
 + Link na **knihu** Deep Learning: [http://www.deeplearningbook.org/](http://www.deeplearningbook.org/)
 + Stránka komunity: [https://dam.science.upjs.sk/](https://dam.science.upjs.sk/)
++ Facebook: [https://www.facebook.com/DAMupjs/](https://www.facebook.com/DAMupjs/)
 
+Stretnutia v akademickom roku 2019/2020:		   
+		   
+P.č.       | Dátum      | Téma                                                              | Prednášajúci
+-----------|------------|-------------------------------------------------------------------|-----------------------------------------------------
+01         | 25.09.2019 | 3D Human Body Reconstruction using Generative Adversarial Networks| Gergely Magyar, Filip Hendrichovský, Mária Virčíková
+          
+
+Stretnutia z akademického roka 2018/2019:
 
 P.č.       | Dátum      | Téma                                        | Prednášajúci
 -----------|------------|---------------------------------------------|---------------
@@ -21,3 +30,10 @@ P.č.       | Dátum      | Téma                                        | Predn
 10         | 5.12.2018  | From fighting cancer to recognising landmarks | Daniel Kuchta
 11         | 12.12.2018 | Marriage of neuroscience and robotics       | Keerthi Doreswami
 12         | 19.12.2018 | Neurónové siete a geomagnetické búrky       | Gabriela Andrejková
+13         | 20.02.2019 | The power of graphs in speeding up online learning and decision making| Michal Valko
+14         | 25.02.2019 | Automation of Data Science                  | Tomas Horvath
+15         | 20.03.2019 | Way from convolution neural network to artificial inteligence| Juraj Kundrik
+16         | 10.04.2019 | The Doctor in the Machine + Hack Kosice 2019 Report| Jozef Kiseľák
+17         | 09.05.2019 | Deep Learning for Natural Language Processing      | Peter Bednar
+18         | 30.05.2019 | MLMU KE: Introduction to Deep Reinforcement Learning| Slavo Matasovsky
+19         | 19.06.2019 | Depth separation for neural networks               | Tomáš Kocák
