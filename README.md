@@ -3,7 +3,6 @@
 V tomto adresári nájdete:
 
 + **materiály** zo stretnutí komunity DAM na UPJŠ
-+ Link na **knihu** Deep Learning: [http://www.deeplearningbook.org/](http://www.deeplearningbook.org/)
 + Stránka komunity: [https://dam.science.upjs.sk/](https://dam.science.upjs.sk/)
 + Facebook: [https://www.facebook.com/DAMupjs/](https://www.facebook.com/DAMupjs/)
 
@@ -12,9 +11,13 @@ Stretnutia v akademickom roku 2019/2020:
 P.č.       | Dátum      | Téma                                                              | Prednášajúci
 -----------|------------|-------------------------------------------------------------------|-----------------------------------------------------
 01         | 25.09.2019 | 3D Human Body Reconstruction using Generative Adversarial Networks| Gergely Magyar, Filip Hendrichovský, Mária Virčíková
+02         | 09.10.2019 | Physics-inspired approach to efficient and automated gap filling in massive spatial data| Milan Žukovič
+03         | 16.10.2019 | [https://arxiv.org/abs/1803.01271](An Empirical Evaluation of Generic Convolutional and Recurrent Networks for Sequence Modeling)| Reading Group
           
 
 Stretnutia z akademického roka 2018/2019:
+
+Na stretnutiach Deep Learning Reading Group sa čítala kniha dostupná na nasledijúcom linku: [http://www.deeplearningbook.org/](http://www.deeplearningbook.org/)
 
 P.č.       | Dátum      | Téma                                        | Prednášajúci
 -----------|------------|---------------------------------------------|---------------
@@ -27,7 +30,7 @@ P.č.       | Dátum      | Téma                                        | Predn
 07         | 14.11.2018 | Spectral bandits for smooth graph functions | Tomáš Kocák
 08         | 21.11.2018 | Machine learning in astronomy: why and how? | Michal Čokina
 09         | 28.11.2018 | 3D modeling of the countryside              | Ján Kaňuk
-10         | 5.12.2018  | From fighting cancer to recognising landmarks | Daniel Kuchta
+10         | 05.12.2018  | From fighting cancer to recognising landmarks | Daniel Kuchta
 11         | 12.12.2018 | Marriage of neuroscience and robotics       | Keerthi Doreswami
 12         | 19.12.2018 | Neurónové siete a geomagnetické búrky       | Gabriela Andrejková
 13         | 20.02.2019 | The power of graphs in speeding up online learning and decision making| Michal Valko
