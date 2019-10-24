@@ -13,6 +13,8 @@ P.č.       | Dátum      | Téma                                               
 01         | 25.09.2019 | 3D Human Body Reconstruction using Generative Adversarial Networks| Gergely Magyar, Filip Hendrichovský, Mária Virčíková
 02         | 09.10.2019 | Physics-inspired approach to efficient and automated gap filling in massive spatial data| Milan Žukovič
 03         | 16.10.2019 | [An Empirical Evaluation of Generic Convolutional and Recurrent Networks for Sequence Modeling](https://arxiv.org/abs/1803.01271)| Reading Group
+04		   | 23.10.2019 | Business & AI                                                     | Tomáš Bel
+05         | 30.10.2019 | [Attention Augmented Convolutional Networks](https://arxiv.org/pdf/1904.09925.pdf)| Reading Group
           
 
 **Stretnutia z akademického roka 2018/2019:**
