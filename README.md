@@ -5,6 +5,7 @@ V tomto adresári nájdete:
 + **materiály** zo stretnutí komunity DAM na UPJŠ
 + Stránka komunity: [https://dam.science.upjs.sk/](https://dam.science.upjs.sk/)
 + Facebook: [https://www.facebook.com/DAMupjs/](https://www.facebook.com/DAMupjs/)
++ Stránka nového študijného programu **ADUI**: [https://ics.science.upjs.sk/adui/](https://ics.science.upjs.sk/adui/)
 
 **Stretnutia v akademickom roku 2019/2020:**		   
 		   
@@ -15,7 +16,7 @@ P.č.       | Dátum      | Téma                                               
 03         | 16.10.2019 | [An Empirical Evaluation of Generic Convolutional and Recurrent Networks for Sequence Modeling](https://arxiv.org/abs/1803.01271)| Reading Group
 04		   | 23.10.2019 | Business & AI                                                     | Tomáš Bel
 05         | 30.10.2019 | [Attention Augmented Convolutional Networks](https://arxiv.org/pdf/1904.09925.pdf)| Reading Group
-          
+06         | 06.11.2019 | Computer vision applications of Deep Learning                     | Stanislav Hrivňak, Ondrej Palkoci
 
 **Stretnutia z akademického roka 2018/2019:**
 
