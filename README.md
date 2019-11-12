@@ -17,6 +17,8 @@ P.č.       | Dátum      | Téma                                               
 04		   | 23.10.2019 | Business & AI                                                     | Tomáš Bel
 05         | 30.10.2019 | [Attention Augmented Convolutional Networks](https://arxiv.org/pdf/1904.09925.pdf)| Reading Group
 06         | 06.11.2019 | Computer vision applications of Deep Learning                     | Stanislav Hrivňak, Ondrej Palkoci
+07         | 13.11.2019 | [Densely Connected Convolutional Networks](https://arxiv.org/abs/1608.06993) | Reading Group
+08         | 20.11.2019 | Time series - a different beast                                   | Róbert Tóth
 
 **Stretnutia z akademického roka 2018/2019:**
 
