@@ -19,6 +19,7 @@ P.č.       | Dátum      | Téma                                               
 06         | 06.11.2019 | Computer vision applications of Deep Learning                     | Stanislav Hrivňak, Ondrej Palkoci
 07         | 13.11.2019 | [Densely Connected Convolutional Networks](https://arxiv.org/abs/1608.06993) | Reading Group
 08         | 20.11.2019 | Time series - a different beast                                   | Róbert Tóth
+09         | 27.11.2019 | [Anomaly Detection : A Survey](http://cucis.ece.northwestern.edu/projects/DMS/publications/AnomalyDetection.pdf) | Reading Group on Anomaly Detection
 
 **Stretnutia z akademického roka 2018/2019:**
 
