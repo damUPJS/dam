@@ -24,7 +24,8 @@ P.č.       | Dátum      | Téma                                               
 11         | 11.12.2019 | [Anomaly Detection : A Survey](http://cucis.ece.northwestern.edu/projects/DMS/publications/AnomalyDetection.pdf) (p.31 - end)| Reading Group on Anomaly Detection
 12         | 08.01.2020 | [Neural Turing Machines](https://arxiv.org/abs/1410.5401)         | Reading Group
 13         | 23.01.2020 | [The Lottery Ticket Hypothesis: Finding Sparse, Trainable Neural Networks](https://arxiv.org/pdf/1803.03635.pdf) | Reading Group
-14         | 12.02.2020 | Text detection and recognition in natural scene images - a real challenge | Peter Bugata, Dávid Hudak
+14         | 06.02.2020 | [Outlier Exposure with Confidence Control for Out-of-Distribution Detection](https://arxiv.org/pdf/1906.03509.pdf) | Reading Group
+15         | 12.02.2020 | Text detection and recognition in natural scene images - a real challenge | Peter Bugata, Dávid Hudak
 
 
 **Stretnutia z akademického roka 2018/2019:**
