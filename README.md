@@ -25,7 +25,8 @@ P.č.       | Dátum      | Téma                                               
 12         | 08.01.2020 | [Neural Turing Machines](https://arxiv.org/abs/1410.5401)         | Reading Group
 13         | 23.01.2020 | [The Lottery Ticket Hypothesis: Finding Sparse, Trainable Neural Networks](https://arxiv.org/pdf/1803.03635.pdf) | Reading Group
 14         | 06.02.2020 | [Outlier Exposure with Confidence Control for Out-of-Distribution Detection](https://arxiv.org/pdf/1906.03509.pdf) | Reading Group
-15         | 12.02.2020 | Text detection and recognition in natural scene images - a real challenge | Peter Bugata, Dávid Hudak
+15         | 12.02.2020 | Text detection and recognition in natural scene images - a real challenge | Peter Bugata, Dávid Hudák
+16         | 20.02.2020 | [NISP: Pruning Networks using Neuron Importance Score Propagation](https://arxiv.org/pdf/1711.05908.pdf) | Reading Group
 
 
 **Stretnutia z akademického roka 2018/2019:**
