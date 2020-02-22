@@ -27,6 +27,8 @@ P.č.       | Dátum      | Téma                                               
 14         | 06.02.2020 | [Outlier Exposure with Confidence Control for Out-of-Distribution Detection](https://arxiv.org/pdf/1906.03509.pdf) | Reading Group
 15         | 12.02.2020 | Text detection and recognition in natural scene images - a real challenge | Peter Bugata, Dávid Hudák
 16         | 20.02.2020 | [NISP: Pruning Networks using Neuron Importance Score Propagation](https://arxiv.org/pdf/1711.05908.pdf) | Reading Group
+17         | 26.02.2020 | Formal concept analysis (FCA) and its basic tools | Ondrej Krídlo
+18         | 05.03.2020 | [Normalizing Flows for Probabilistic Modeling and Inference](https://arxiv.org/pdf/1912.02762.pdf) | Reading Group
 
 
 **Stretnutia z akademického roka 2018/2019:**
