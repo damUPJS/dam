@@ -29,7 +29,7 @@ P.č.       | Dátum      | Téma                                               
 16         | 20.02.2020 | [NISP: Pruning Networks using Neuron Importance Score Propagation](https://arxiv.org/pdf/1711.05908.pdf) | Reading Group
 17         | 26.02.2020 | Formal concept analysis (FCA) and its basic tools | Ondrej Krídlo
 18         | 05.03.2020 | [Normalizing Flows for Probabilistic Modeling and Inference](https://arxiv.org/pdf/1912.02762.pdf) | Reading Group
-
+19         | 31.03.2020 | Gestalt principles in Data Visualisation (ONLINE MLMU) [Video](https://youtu.be/64_J2iKEywU) |Anastázie Sedláková 
 
 **Stretnutia z akademického roka 2018/2019:**
 
