@@ -30,6 +30,10 @@ P.č.       | Dátum      | Téma                                               
 17         | 26.02.2020 | Formal concept analysis (FCA) and its basic tools | Ondrej Krídlo
 18         | 05.03.2020 | [Normalizing Flows for Probabilistic Modeling and Inference](https://arxiv.org/pdf/1912.02762.pdf) | Reading Group
 19         | 31.03.2020 | Gestalt principles in Data Visualisation (ONLINE MLMU) [Video](https://youtu.be/64_J2iKEywU) |Anastázie Sedláková 
+20         | 21.04.2020 | Optimization for Machine Learning: From Theory to Practice and Back (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=MGboW-mIIi8) |Filip Hanzely
+21         | 19.05.2020 | Understanding machine learning with statistical physics (ONLINE MLMU) [Video](https://youtu.be/yd09g0RaqLg) |Lenka Zdeborová
+22         | 03.06.2020 | Large-scale forecasting & Free text clustering (ONLINE MLMU) [Video](https://youtu.be/2Msu67RxNFg) |Michał Kurcewicz, Tetyana Holets
+23         | 18.06.2020 | AI technology works differently from our brains (ONLINE MLMU)  |Danko Nikolić
 
 **Stretnutia z akademického roka 2018/2019:**
 
