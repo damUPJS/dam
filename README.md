@@ -33,7 +33,8 @@ P.č.       | Dátum      | Téma                                               
 20         | 21.04.2020 | Optimization for Machine Learning: From Theory to Practice and Back (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=MGboW-mIIi8) |Filip Hanzely
 21         | 19.05.2020 | Understanding machine learning with statistical physics (ONLINE MLMU) [Video](https://youtu.be/yd09g0RaqLg) |Lenka Zdeborová
 22         | 03.06.2020 | Large-scale forecasting & Free text clustering (ONLINE MLMU) [Video](https://youtu.be/2Msu67RxNFg) |Michał Kurcewicz, Tetyana Holets
-23         | 18.06.2020 | AI technology works differently from our brains (ONLINE MLMU)  |Danko Nikolić
+23         | 18.06.2020 | Under the Hood of Smart Quarantine: Data and Memory Maps (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=ymShqVlc2Ps) |Danko Nikolić
+24         | 30.06.2020 | AI technology works differently from our brains (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=IOLNUwp5bso) |Petr Bednařík, Ondřej Tomas, Vojta Tůma
 
 **Stretnutia z akademického roka 2018/2019:**
 
