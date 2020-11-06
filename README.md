@@ -11,8 +11,8 @@ V tomto adresári nájdete:
 		   
 P.č.       | Dátum      | Téma                                                              | Prednášajúci
 -----------|------------|-------------------------------------------------------------------|-----------------------------------------------------
-01         | 23.09.2020 | Serve Your ML Models in AWS Using Python  (ONLINE MLMU) | Václav Košař
-02         | 21.10.2020 | Sentiment Analysis for Social Media  (ONLINE MLMU) | Jan Rus
+01         | 23.09.2020 | Serve Your ML Models in AWS Using Python  (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=aU95dBAspr0)| Václav Košař
+02         | 21.10.2020 | Sentiment Analysis for Social Media  (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=ttBQCj3lxnw)| Jan Rus
 03         | 04.11.2020 | Reinforcement learning 1: deep Q networks  (ONLINE MLMU) | Michal Chovanec
 
 **Stretnutia v akademickom roku 2019/2020:**		   
