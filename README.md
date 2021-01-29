@@ -16,6 +16,7 @@ P.č.       | Dátum      | Téma                                               
 03         | 04.11.2020 | Reinforcement learning 1: deep Q networks  (ONLINE MLMU) | Michal Chovanec
 04         | 02.12.2020 | Mining and predicting processes  (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=v1Uex5oDh70)| Ondrej Brichta
 05         | 13.01.2021 | Thoth: Reinforcement learning-based dependency resolution  (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=N77g2Mu7Ey8)| Fridolin Pokorny
+06         | 28.01.2021 | AI Research in Seznam.cz (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=-ZBKcH9f6es)| Xenia Shakurova, Ondrej Filip, O. Bednar & M. Soukup a Jan Vrsovsky
 
 **Stretnutia v akademickom roku 2019/2020:**		   
 		   
