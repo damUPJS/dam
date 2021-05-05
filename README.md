@@ -13,11 +13,12 @@ P.č.       | Dátum      | Téma                                               
 -----------|------------|-------------------------------------------------------------------|-----------------------------------------------------
 01         | 23.09.2020 | Serve Your ML Models in AWS Using Python  (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=aU95dBAspr0)| Václav Košař
 02         | 21.10.2020 | Sentiment Analysis for Social Media  (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=ttBQCj3lxnw)| Jan Rus
-03         | 04.11.2020 | Reinforcement learning 1: deep Q networks  (ONLINE MLMU) | Michal Chovanec
+03         | 04.11.2020 | Reinforcement learning 1: deep Q networks  (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=eRzjtyCdPb4)| Michal Chovanec
 04         | 02.12.2020 | Mining and predicting processes  (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=v1Uex5oDh70)| Ondrej Brichta
 05         | 13.01.2021 | Thoth: Reinforcement learning-based dependency resolution  (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=N77g2Mu7Ey8)| Fridolin Pokorny
 06         | 28.01.2021 | AI Research in Seznam.cz (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=-ZBKcH9f6es)| Xenia Shakurova, Ondrej Filip, O. Bednar & M. Soukup, Jan Vrsovsky
 07         | 08.04.2021 | MLOps and DataOps techniques using Databricks (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=T9JHR29UHIo)| Marton Hubay, Priyan Chandrapala, Nikolay Vaklinov
+08         | 21.04.2021 | MLOps: Building feature stores and ML production pipelines (ONLINE MLMU) | Yury Kasimov, Joao Da Silva, Jiří Koutný
 
 **Stretnutia v akademickom roku 2019/2020:**		   
 		   
