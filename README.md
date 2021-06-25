@@ -20,6 +20,10 @@ P.č.       | Dátum      | Téma                                               
 07         | 08.04.2021 | MLOps and DataOps techniques using Databricks (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=T9JHR29UHIo)| Marton Hubay, Priyan Chandrapala, Nikolay Vaklinov
 08         | 21.04.2021 | MLOps: Building feature stores and ML production pipelines (ONLINE MLMU) | Yury Kasimov, Joao Da Silva, Jiří Koutný
 
+09         | 26.05.2021 | Key factors of successful MLOps (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=S338LY1qMys)| Wioletta Stobieniecka, Michal Marusan, Dorian Hodorogea
+10         | 07.06.2021 | D&lt;AI&gt;DALOS – From Automation to Intelligence: The Long History of AI (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=TIR0XaOGDd0)| Nathan Ensmenger
+11         | 24.06.2021 | D&lt;AI&gt;DALOS – Post-Human Creativity: The Use of AI in Art (ONLINE MLMU) [Video](https://www.youtube.com/watch?v=Xxi9tTuwync)| Filippo Lorenzin, Garrett Lynch, Paul Mouginot, Iskra Velitchkova
+
 **Stretnutia v akademickom roku 2019/2020:**		   
 		   
 P.č.       | Dátum      | Téma                                                              | Prednášajúci
